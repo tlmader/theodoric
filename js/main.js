@@ -6,7 +6,7 @@ var Guardian = Guardian || {};
 Guardian.game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');
 
 Guardian.game.state.add('Boot', Guardian.Boot);
-Guardian.game.state.add('Preload', Guardian.Preload);
+Guardian.game.state.add('Preloader', Guardian.Preloader);
 Guardian.game.state.add('MainMenu', Guardian.MainMenu);
 Guardian.game.state.add('Game', Guardian.Game);
 

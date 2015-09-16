@@ -1,12 +1,12 @@
 
-BasicGame.MainMenu = function (game) {
+Guardian.MainMenu = function (game) {
 
 	this.music = null;
 	this.playButton = null;
 
 };
 
-BasicGame.MainMenu.prototype = {
+Guardian.MainMenu.prototype = {
 
 	create: function () {
 
