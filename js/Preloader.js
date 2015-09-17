@@ -26,6 +26,7 @@ Guardian.Preloader.prototype = {
 		this.load.spritesheet('things', 'assets/images/things.png', 16, 16);
 		this.load.spritesheet('characters', 'assets/images/characters.png', 16, 16);
 		this.load.spritesheet('dead', 'assets/images/dead.png', 16, 16);
+		this.load.spritesheet('attack', 'assets/images/attack.png', 16, 16);
 		this.load.audio('titleMusic', 'assets/sound/music.mp3');
 	},
 

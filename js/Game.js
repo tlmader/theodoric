@@ -1,3 +1,7 @@
+// Credits:
+// http://www.gamedevacademy.org/html5-phaser-tutorial-spacehipster-a-space-exploration-game/
+// http://www.joshmorony.com/how-to-create-an-animated-character-using-sprites-in-phaser/
+// http://jschomay.tumblr.com/post/103568304133/tutorial-building-a-polished-html5-space-shooter
 
 Guardian.Game = function (game) {
 
@@ -31,19 +35,30 @@ Guardian.Game.prototype = {
         // Set world dimensions
         this.game.world.setBounds(0, 0, 1920, 1920);
         this.background = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'tiles', 65);
+
+        this.wasd = {
+            up: this.game.input.keyboard.addKey(Phaser.Keyboard.W),
+            left: this.game.input.keyboard.addKey(Phaser.Keyboard.A),
+            down: this.game.input.keyboard.addKey(Phaser.Keyboard.S),
+            right: this.game.input.keyboard.addKey(Phaser.Keyboard.D),
+        };
+
         this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
 
         this.player.scale.setTo(2);
 
         // Loop through frames 0, 1, 2 and 3 at 10 frames a second (because we supplied 10 as a parameter) while this animation is playing
-        this.player.animations.add('down', [3, 4, 5], 10, true)
-        this.player.animations.add('left', [15, 16, 17], 10, true)
-        this.player.animations.add('right', [27, 28, 29], 10, true)
-        this.player.animations.add('up', [39, 40, 41], 10, true)
+        this.player.animations.add('down', [3, 4, 5], 10, true);
+        this.player.animations.add('left', [15, 16, 17], 10, true);
+        this.player.animations.add('right', [27, 28, 29], 10, true);
+        this.player.animations.add('up', [39, 40, 41], 10, true);
 
         this.player.animations.play('down');
 
         this.game.camera.follow(this.player);
+
+        // Create the group of attack objects
+        this.generateAttacks();
 
         // Player initial score of zero
         this.playerScore = 0;
@@ -52,64 +67,85 @@ Guardian.Game.prototype = {
         this.game.physics.arcade.enable(this.player);
         this.playerSpeed = 120;
         this.player.body.collideWorldBounds = true;
+    },
 
-        this.wasd = {
-            up: this.game.input.keyboard.addKey(Phaser.Keyboard.W),
-            left: this.game.input.keyboard.addKey(Phaser.Keyboard.A),
-            down: this.game.input.keyboard.addKey(Phaser.Keyboard.S),
-            right: this.game.input.keyboard.addKey(Phaser.Keyboard.D),
-        };
+    generateAttacks: function () {
+
+        this.attacks = this.game.add.group();
+
+        // Enable physics in them
+        this.attacks.enableBody = true;
+        this.attacks.physicsBodyType = Phaser.Physics.ARCADE;
+        this.attacks.createMultiple(30, 'attack');
+        this.attacks.setAll('outOfBoundsKill', true);
+        this.attacks.setAll('checkWorldBounds', true);
+    },
+
+    attack: function () {
+
+        // Grab the first attack from the group
+        var attack = this.attacks.getFirstExists(false);
+
+        if (attack) {
+            // And fire it
+            attack.reset(this.player.x, this.player.y);
+            attack.rotation = this.game.math.angleBetween(this.player.x, this.player.y, this.game.input.activePointer.x, this.game.input.activePointer.y);
+            this.game.physics.arcade.moveToPointer(attack, 150);
+        }
     },
 
     update: function () {
 
-        var speed = 120;
+        var playerSpeed = 120;
+        var playerDirection;
+
+        // Movement
 
         // Up-Left
         if (this.wasd.up.isDown && this.wasd.left.isDown) {
-            this.player.body.velocity.x = -speed;
-            this.player.body.velocity.y = -speed;
+            this.player.body.velocity.x = -playerSpeed;
+            this.player.body.velocity.y = -playerSpeed;
             this.player.animations.play('left');
 
         // Up-Right
         } else if (this.wasd.up.isDown && this.wasd.right.isDown) {
-            this.player.body.velocity.x = speed;
-            this.player.body.velocity.y = -speed;
+            this.player.body.velocity.x = playerSpeed;
+            this.player.body.velocity.y = -playerSpeed;
             this.player.animations.play('right');
 
         // Down-Left
         } else if (this.wasd.down.isDown && this.wasd.left.isDown) {
-            this.player.body.velocity.x = -speed;
-            this.player.body.velocity.y = speed;
+            this.player.body.velocity.x = -playerSpeed;
+            this.player.body.velocity.y = playerSpeed;
             this.player.animations.play('left');
 
         // Down-Right
         } else if (this.wasd.down.isDown && this.wasd.right.isDown) {
-            this.player.body.velocity.x = speed;
-            this.player.body.velocity.y = speed;
+            this.player.body.velocity.x = playerSpeed;
+            this.player.body.velocity.y = playerSpeed;
             this.player.animations.play('right');
 
         // Up
         } else if (this.wasd.up.isDown) {
             this.player.body.velocity.x = 0;
-            this.player.body.velocity.y = -speed;
+            this.player.body.velocity.y = -playerSpeed;
             this.player.animations.play('up');
 
         // Down
         } else if (this.wasd.down.isDown) {
             this.player.body.velocity.x = 0;
-            this.player.body.velocity.y = speed;
+            this.player.body.velocity.y = playerSpeed;
             this.player.animations.play('down');
 
         // Left
         } else if (this.wasd.left.isDown) {
-            this.player.body.velocity.x = -speed;
+            this.player.body.velocity.x = -playerSpeed;
             this.player.body.velocity.y = 0;
             this.player.animations.play('left');
 
         // Right
         } else if (this.wasd.right.isDown) {
-            this.player.body.velocity.x = speed;
+            this.player.body.velocity.x = playerSpeed;
             this.player.body.velocity.y = 0;
             this.player.animations.play('right');
 
@@ -118,6 +154,11 @@ Guardian.Game.prototype = {
             this.player.animations.stop();
             this.player.body.velocity.x = 0;
             this.player.body.velocity.y = 0;
+        }
+
+        if(this.game.input.activePointer.isDown) {
+
+            this.attack();
         }
     },
 
