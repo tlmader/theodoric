@@ -3,7 +3,6 @@ Guardian.MainMenu = function (game) {
 
 	this.music = null;
 	this.playButton = null;
-
 };
 
 Guardian.MainMenu.prototype = {
@@ -28,13 +27,11 @@ Guardian.MainMenu.prototype = {
 		t.anchor.set(0.5);
 
 		this.playButton = this.add.button(this.game.width / 2, this.game.height / 2 + 50, 'playButton', this.startGame, this, 'buttonOver', 'buttonOut', 'buttonOver');
-
 	},
 
 	update: function () {
 
 		// Do some nice funky main menu effect here
-
 	},
 
 	startGame: function (pointer) {
@@ -44,7 +41,5 @@ Guardian.MainMenu.prototype = {
 
 		// And start the actual game
 		this.state.start('Game');
-
 	}
-
 };

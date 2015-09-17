@@ -30,16 +30,16 @@ Guardian.Game.prototype = {
     create: function () {
         // Set world dimensions
         this.game.world.setBounds(0, 0, 1920, 1920);
-        this.background = this.game.add.tileSprite(3, 1, this.game.world.width, this.game.world.height, 'tiles');
+        this.background = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'tiles', 65);
         this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
 
         this.player.scale.setTo(2);
 
         // Loop through frames 0, 1, 2 and 3 at 10 frames a second (because we supplied 10 as a parameter) while this animation is playing
-        this.player.animations.add('down', [0, 1, 2, 3], 10, true)
-        this.player.animations.add('left', [4, 5, 6, 7], 10, true)
-        this.player.animations.add('right', [8, 9, 10, 11], 10, true)
-        this.player.animations.add('up', [12, 13, 14, 15], 10, true)
+        this.player.animations.add('down', [3, 4, 5], 10, true)
+        this.player.animations.add('left', [15, 16, 17], 10, true)
+        this.player.animations.add('right', [27, 28, 29], 10, true)
+        this.player.animations.add('up', [39, 40, 41], 10, true)
 
         this.player.animations.play('down');
 

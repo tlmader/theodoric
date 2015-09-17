@@ -28,7 +28,6 @@ Guardian.Boot.prototype = {
             this.scale.forceLandscape = true;
             this.scale.pageAlignHorizontally = true;
         }
-
     },
 
     preload: function () {
@@ -36,7 +35,6 @@ Guardian.Boot.prototype = {
         //  Here we load the assets required for our preloader (in this case a background and a loading bar)
         // this.load.image('preloaderBackground', 'images/preloader_background.jpg');
         this.load.image('preloaderBar', 'assets/images/preloader-bar.png');
-
     },
 
     create: function () {
@@ -44,7 +42,5 @@ Guardian.Boot.prototype = {
         //  By this point the preloader assets have loaded to the cache, we've set the game settings
         //  So now let's start the real preloader going
         this.state.start('Preloader');
-
     }
-
 };

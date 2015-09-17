@@ -5,7 +5,6 @@ Guardian.Preloader = function (game) {
 	this.preloadBar = null;
 
 	this.ready = false;
-
 };
 
 Guardian.Preloader.prototype = {
@@ -28,14 +27,12 @@ Guardian.Preloader.prototype = {
 		this.load.spritesheet('characters', 'assets/images/characters.png', 16, 16);
 		this.load.spritesheet('dead', 'assets/images/dead.png', 16, 16);
 		this.load.audio('titleMusic', 'assets/sound/music.mp3');
-
 	},
 
 	create: function () {
 
 		//	Once the load has finished we disable the crop because we're going to sit in the update loop for a short while as the music decodes
 		this.preloadBar.cropEnabled = false;
-
 	},
 
 	update: function () {
@@ -54,7 +51,5 @@ Guardian.Preloader.prototype = {
 		 	this.ready = true;
 		 	this.state.start('MainMenu');
 		}
-
 	}
-
 };
