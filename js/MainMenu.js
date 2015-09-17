@@ -1,8 +1,8 @@
 
 Theodoric.MainMenu = function (game) {
 
-	this.music = null;
-	this.playButton = null;
+	this.music;
+	this.playButton;
 };
 
 Theodoric.MainMenu.prototype = {

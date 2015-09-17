@@ -43,6 +43,8 @@ Theodoric.Game.prototype = {
         this.generateAttacks();
         this.generateEnemies();
 
+        this.game.physics.arcade.collide(this.player, this.enemies, this.hitAsteroid, null, this);
+
         // Set the controls
         this.wasd = {
             up: this.game.input.keyboard.addKey(Phaser.Keyboard.W),
@@ -51,27 +53,12 @@ Theodoric.Game.prototype = {
             right: this.game.input.keyboard.addKey(Phaser.Keyboard.D),
         };
 
+
         // Set the camera
         this.game.camera.follow(this.player);
 
         // Player initial score of zero
         this.playerScore = 0;
-    },
-
-    generateEnemies: function () {
-
-        this.skeleton = this.game.add.sprite(this.game.world.centerX + 50, this.game.world.centerY + 50, 'characters');
-        this.skeleton.scale.setTo(2);
-
-        this.skeleton.animations.add('skeletonDown', [9, 10, 11], 10, true);
-        this.skeleton.animations.add('skeletonLeft', [21, 22, 23], 10, true);
-        this.skeleton.animations.add('skeletonRight', [33, 34, 35], 10, true);
-        this.skeleton.animations.add('skeletonUp', [45, 46, 47], 10, true);
-        this.skeleton.animations.play('skeletonDown');
-
-        this.game.physics.arcade.enable(this.skeleton);
-        this.skeleton.body.collideWorldBounds = true;
-        this.skeleton.alive = true;
     },
 
     update: function () {
@@ -137,6 +124,8 @@ Theodoric.Game.prototype = {
         if (this.game.input.activePointer.isDown) {
             this.attack();
         }
+
+        this.game.physics.arcade.collide(this.player, this.enemies, this.damagePlayer, null, this);
     },
 
     attack: function () {
@@ -154,13 +143,11 @@ Theodoric.Game.prototype = {
         }
     },
 
-    quitGame: function (pointer) {
+    damagePlayer: function(player, asteroid) {
 
-        //  Here you should destroy anything you no longer need.
-        //  Stop music, delete sprites, purge caches, free resources, all that good stuff.
+        this.player.kill();
 
-        //  Then let's go back to the main menu.
-        this.state.start('MainMenu');
+        this.game.time.events.add(800, this.gameOver, this);
     },
 
     generatePlayer: function () {
@@ -199,6 +186,32 @@ Theodoric.Game.prototype = {
         this.nextAttack = 0;
     },
 
+    generateEnemies: function () {
+
+        this.enemies = this.game.add.group();
+
+        // Enable physics in them
+        this.enemies.enableBody = true;
+        this.enemies.physicsBodyType = Phaser.Physics.ARCADE;
+
+        var numEnemies = 100;
+        var enemy;
+
+        for (var i = 0; i < numEnemies; i++) {
+
+            enemy = this.enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
+            enemy.scale.setTo(2);
+
+            enemy.animations.add('skeletonDown', [9, 10, 11], 10, true);
+            enemy.animations.add('skeletonLeft', [21, 22, 23], 10, true);
+            enemy.animations.add('skeletonRight', [33, 34, 35], 10, true);
+            enemy.animations.add('skeletonUp', [45, 46, 47], 10, true);
+            enemy.animations.play('skeletonDown');
+
+            enemy.body.collideWorldBounds = true;
+        }
+    },
+
     generateSound: function () {
 
         // Music
@@ -208,5 +221,25 @@ Theodoric.Game.prototype = {
 
         // Sound effects
         this.attackSound = this.add.audio('attackSound');
+    },
+
+    gameOver: function() {
+
+        //  Here you should destroy anything you no longer need.
+        //  Stop music, delete sprites, purge caches, free resources, all that good stuff.
+		this.music.stop();
+
+        //  Then let's go back to the main menu.
+        this.game.state.start('MainMenu', true, false);
+    },
+
+    quitGame: function (pointer) {
+
+        //  Here you should destroy anything you no longer need.
+        //  Stop music, delete sprites, purge caches, free resources, all that good stuff.
+		this.music.stop();
+
+        //  Then let's go back to the main menu.
+        this.state.start('MainMenu');
     }
 };
