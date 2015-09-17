@@ -23,12 +23,11 @@ Guardian.Preloader.prototype = {
 		this.load.setPreloadSprite(this.preloadBar);
 
 		//	Here we load the rest of the assets our game needs.
-		//	As this is just a Project Template I've not provided these assets, swap them for your own.
-		this.load.image('titlepage', 'images/title.jpg');
-		this.load.atlas('playButton', 'images/play_button.png', 'images/play_button.json');
-		this.load.audio('titleMusic', ['audio/main_menu.mp3']);
-		this.load.bitmapFont('caslon', 'fonts/caslon.png', 'fonts/caslon.xml');
-		//	+ lots of other required assets here
+		this.load.spritesheet('tiles', 'assets/images/tiles.png', 16, 16);
+		this.load.spritesheet('things', 'assets/images/things.png', 16, 16);
+		this.load.spritesheet('characters', 'assets/images/characters.png', 16, 16);
+		this.load.spritesheet('dead', 'assets/images/dead.png', 16, 16);
+		this.load.audio('titleMusic', 'assets/sound/music.mp3');
 
 	},
 
@@ -51,9 +50,9 @@ Guardian.Preloader.prototype = {
 		//	the update function completely.
 		
 		if (this.cache.isSoundDecoded('titleMusic') && this.ready == false)
-		{
-			this.ready = true;
-			this.state.start('MainMenu');
+			{
+		 	this.ready = true;
+		 	this.state.start('MainMenu');
 		}
 
 	}

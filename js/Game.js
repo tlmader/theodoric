@@ -28,14 +28,40 @@ Guardian.Game = function (game) {
 Guardian.Game.prototype = {
 
     create: function () {
+        // Set world dimensions
+        this.game.world.setBounds(0, 0, 1920, 1920);
+        this.background = this.game.add.tileSprite(3, 1, this.game.world.width, this.game.world.height, 'tiles');
+        this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
 
-        //  Honestly, just about anything could go here. It's YOUR game after all. Eat your heart out!
+        this.player.scale.setTo(2);
+
+        // Loop through frames 0, 1, 2 and 3 at 10 frames a second (because we supplied 10 as a parameter) while this animation is playing
+        this.player.animations.add('down', [0, 1, 2, 3], 10, true)
+        this.player.animations.add('left', [4, 5, 6, 7], 10, true)
+        this.player.animations.add('right', [8, 9, 10, 11], 10, true)
+        this.player.animations.add('up', [12, 13, 14, 15], 10, true)
+
+        this.player.animations.play('down');
+
+        this.game.camera.follow(this.player);
+
+        // Player initial score of zero
+        this.playerScore = 0;
+
+        // Enable player physics
+        this.game.physics.arcade.enable(this.player);
+        this.playerSpeed = 120;
+        this.player.body.collideWorldBounds = true;
 
     },
 
     update: function () {
 
-        //  Honestly, just about anything could go here. It's YOUR game after all. Eat your heart out!
+        if (this.game.input.activePointer.justPressed()) {
+
+            //move on the direction of the input
+            this.game.physics.arcade.moveToPointer(this.player, this.playerSpeed);
+        }
 
     },
 
