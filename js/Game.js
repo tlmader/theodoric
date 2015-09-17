@@ -35,43 +35,13 @@ Theodoric.Game.prototype = {
 
         // Generate the world
         this.game.world.setBounds(0, 0, 1920, 1920);
+
         this.background = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'tiles', 65);
 
-		this.music = this.add.audio('overworldMusic');
-		this.music.loop = true;
-		this.music.play();
-
-        this.attackSound = this.add.audio('attackSound');
-
-        // Generate the player
-        this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
-        this.player.scale.setTo(2);
-
-        // Loop through frames 3, 4, and 5 at 10 frames a second while the animation is playing
-        this.player.animations.add('down', [3, 4, 5], 10, true);
-        this.player.animations.add('left', [15, 16, 17], 10, true);
-        this.player.animations.add('right', [27, 28, 29], 10, true);
-        this.player.animations.add('up', [39, 40, 41], 10, true);
-        this.player.animations.play('down');
-
-        // Enable player physics
-        this.game.physics.arcade.enable(this.player);
-        this.playerSpeed = 120;
-        this.player.body.collideWorldBounds = true;
-
-        // Generate the group of attack objects
-        this.attacks = this.game.add.group();
-        this.attacks.enableBody = true;
-        this.attacks.physicsBodyType = Phaser.Physics.ARCADE;
-        this.attacks.createMultiple(30, 'attack');
-        this.attacks.setAll('anchor.x', 0.5);
-        this.attacks.setAll('anchor.y', 0.5);
-        this.attacks.setAll('outOfBoundsKill', true);
-        this.attacks.setAll('checkWorldBounds', true);
-
-        this.attackRate = 500;
-        this.nextAttack = 0;
-        this.alive = true;
+        this.generateSound();
+        this.generatePlayer();
+        this.generateAttacks();
+        this.generateEnemies();
 
         // Set the controls
         this.wasd = {
@@ -86,6 +56,22 @@ Theodoric.Game.prototype = {
 
         // Player initial score of zero
         this.playerScore = 0;
+    },
+
+    generateEnemies: function () {
+
+        this.skeleton = this.game.add.sprite(this.game.world.centerX + 50, this.game.world.centerY + 50, 'characters');
+        this.skeleton.scale.setTo(2);
+
+        this.skeleton.animations.add('skeletonDown', [9, 10, 11], 10, true);
+        this.skeleton.animations.add('skeletonLeft', [21, 22, 23], 10, true);
+        this.skeleton.animations.add('skeletonRight', [33, 34, 35], 10, true);
+        this.skeleton.animations.add('skeletonUp', [45, 46, 47], 10, true);
+        this.skeleton.animations.play('skeletonDown');
+
+        this.game.physics.arcade.enable(this.skeleton);
+        this.skeleton.body.collideWorldBounds = true;
+        this.skeleton.alive = true;
     },
 
     update: function () {
@@ -155,7 +141,7 @@ Theodoric.Game.prototype = {
 
     attack: function () {
 
-        if (!this.alive) {
+        if (!this.player.alive) {
             return;
 
         } else if (this.game.time.now > this.nextAttack && this.attacks.countDead() > 0) {
@@ -175,5 +161,52 @@ Theodoric.Game.prototype = {
 
         //  Then let's go back to the main menu.
         this.state.start('MainMenu');
+    },
+
+    generatePlayer: function () {
+
+        // Generate the player
+        this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
+        this.player.scale.setTo(2);
+
+        // Loop through frames 3, 4, and 5 at 10 frames a second while the animation is playing
+        this.player.animations.add('down', [3, 4, 5], 10, true);
+        this.player.animations.add('left', [15, 16, 17], 10, true);
+        this.player.animations.add('right', [27, 28, 29], 10, true);
+        this.player.animations.add('up', [39, 40, 41], 10, true);
+        this.player.animations.play('down');
+
+        // Enable player physics
+        this.game.physics.arcade.enable(this.player);
+        this.playerSpeed = 120;
+        this.player.body.collideWorldBounds = true;
+        this.player.alive = true;
+    },
+
+    generateAttacks: function () {
+
+        // Generate the group of attack objects
+        this.attacks = this.game.add.group();
+        this.attacks.enableBody = true;
+        this.attacks.physicsBodyType = Phaser.Physics.ARCADE;
+        this.attacks.createMultiple(30, 'attack');
+        this.attacks.setAll('anchor.x', 0.5);
+        this.attacks.setAll('anchor.y', 0.5);
+        this.attacks.setAll('outOfBoundsKill', true);
+        this.attacks.setAll('checkWorldBounds', true);
+
+        this.attackRate = 500;
+        this.nextAttack = 0;
+    },
+
+    generateSound: function () {
+
+        // Music
+		this.music = this.add.audio('overworldMusic');
+		this.music.loop = true;
+		this.music.play();
+
+        // Sound effects
+        this.attackSound = this.add.audio('attackSound');
     }
 };
