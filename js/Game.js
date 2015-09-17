@@ -2,6 +2,7 @@
 // http://www.gamedevacademy.org/html5-phaser-tutorial-spacehipster-a-space-exploration-game/
 // http://www.joshmorony.com/how-to-create-an-animated-character-using-sprites-in-phaser/
 // http://jschomay.tumblr.com/post/103568304133/tutorial-building-a-polished-html5-space-shooter
+// http://ezelia.com/2014/tutorial-creating-basic-multiplayer-game-phaser-eureca-io
 
 Theodoric.Game = function (game) {
 
@@ -36,6 +37,10 @@ Theodoric.Game.prototype = {
         this.game.world.setBounds(0, 0, 1920, 1920);
         this.background = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'tiles', 65);
 
+		this.music = this.add.audio('overworldMusic');
+		this.music.loop = true;
+		this.music.play();
+
         // Generate the player
         this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
         this.player.scale.setTo(2);
@@ -62,8 +67,8 @@ Theodoric.Game.prototype = {
         this.attacks.setAll('outOfBoundsKill', true);
         this.attacks.setAll('checkWorldBounds', true);
 
-        this.fireRate = 500;
-        this.nextFire = 0;
+        this.attackRate = 500;
+        this.nextAttack = 0;
         this.alive = true;
 
         // Set the controls
@@ -146,16 +151,17 @@ Theodoric.Game.prototype = {
         }
     },
 
-    attack: function (target) {
+    attack: function () {
 
         if (!this.alive) {
             return;
 
-        } else if (this.game.time.now > this.nextFire && this.attacks.countDead() > 0) {
-            this.nextFire = this.game.time.now + this.attackRate;
+        } else if (this.game.time.now > this.nextAttack && this.attacks.countDead() > 0) {
+            this.nextAttack = this.game.time.now + this.attackRate;
             var attack = this.attacks.getFirstDead();
-            attack.reset(this.player.x, this.player.y);
-            attack.rotation = this.game.physics.arcade.moveToObject(attack, target, 150);
+            attack.reset(this.player.x + 16, this.player.y + 16);
+            attack.rotation = this.game.physics.arcade.moveToPointer(attack, 150);
+
         }
     },
 

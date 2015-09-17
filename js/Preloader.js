@@ -30,7 +30,8 @@ Theodoric.Preloader.prototype = {
 		this.load.spritesheet('characters', 'assets/images/characters.png', 16, 16);
 		this.load.spritesheet('dead', 'assets/images/dead.png', 16, 16);
 		this.load.spritesheet('attack', 'assets/images/attack.png', 16, 16);
-		this.load.audio('titleMusic', 'assets/sound/music.mp3');
+		this.load.audio('openingMusic', 'assets/sound/opening.ogg');
+		this.load.audio('overworldMusic', 'assets/sound/overworld.ogg');
 	},
 
 	create: function () {
@@ -50,7 +51,7 @@ Theodoric.Preloader.prototype = {
 		//	If you don't have any music in your game then put the game.state.start line into the create function and delete
 		//	the update function completely.
 		
-		if (this.cache.isSoundDecoded('titleMusic') && this.ready == false)
+		if (this.cache.isSoundDecoded('openingMusic') && this.ready == false)
 			{
 		 	this.ready = true;
 		 	this.state.start('MainMenu');

@@ -18,7 +18,8 @@ Theodoric.MainMenu.prototype = {
 		// Give it speed in x
 		this.background.autoScroll(-20, 0);
 
-		this.music = this.add.audio('titleMusic');
+		this.music = this.add.audio('openingMusic');
+		this.music.loop = true;
 		this.music.play();
 
 		this.splash = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'logo');
