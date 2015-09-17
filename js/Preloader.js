@@ -1,5 +1,5 @@
 
-Guardian.Preloader = function (game) {
+Theodoric.Preloader = function (game) {
 
 	this.background = null;
 	this.preloadBar = null;
@@ -7,14 +7,17 @@ Guardian.Preloader = function (game) {
 	this.ready = false;
 };
 
-Guardian.Preloader.prototype = {
+Theodoric.Preloader.prototype = {
 
 	preload: function () {
 
 		//	These are the assets we loaded in Boot.js
 		//	A nice sparkly background and a loading progress bar
-		this.background = this.add.sprite(0, 0, 'preloaderBackground');
-		this.preloadBar = this.add.sprite(300, 400, 'preloaderBar');
+		this.splash = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'logo');
+		this.splash.anchor.setTo(0.5);
+
+		this.preloadBar = this.add.sprite(this.game.world.centerX, this.game.world.centerY + 128, 'preloaderBar');
+		this.preloadBar.anchor.setTo(0.5);
 
 		//	This sets the preloadBar sprite as a loader sprite.
 		//	What that does is automatically crop the sprite from 0 to full-width

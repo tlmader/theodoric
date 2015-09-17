@@ -1,11 +1,11 @@
 
-Guardian.MainMenu = function (game) {
+Theodoric.MainMenu = function (game) {
 
 	this.music = null;
 	this.playButton = null;
 };
 
-Guardian.MainMenu.prototype = {
+Theodoric.MainMenu.prototype = {
 
 	create: function () {
 
@@ -21,10 +21,8 @@ Guardian.MainMenu.prototype = {
 		this.music = this.add.audio('titleMusic');
 		this.music.play();
 
-		var text = "Guardian";
-		var style = { font: "30px Arial", fill: "#fff", align: "center" };
-		var t = this.game.add.text(this.game.width / 2, this.game.height / 2, text, style);
-		t.anchor.set(0.5);
+		this.splash = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'logo');
+		this.splash.anchor.setTo(0.5);
 
 		this.playButton = this.add.button(this.game.width / 2, this.game.height / 2 + 50, 'playButton', this.startGame, this, 'buttonOver', 'buttonOut', 'buttonOver');
 	},

@@ -1,10 +1,10 @@
-var Guardian = {};
+var Theodoric = {};
 
-Guardian.Boot = function (game) {
+Theodoric.Boot = function (game) {
 
 };
 
-Guardian.Boot.prototype = {
+Theodoric.Boot.prototype = {
 
     init: function () {
 
@@ -34,7 +34,8 @@ Guardian.Boot.prototype = {
 
         //  Here we load the assets required for our preloader (in this case a background and a loading bar)
         // this.load.image('preloaderBackground', 'images/preloader_background.jpg');
-        this.load.image('preloaderBar', 'assets/images/preloader-bar.png');
+        this.load.image('logo', 'assets/images/logo.png');
+        this.load.image('preloaderBar', 'assets/images/preload-bar.png');
     },
 
     create: function () {

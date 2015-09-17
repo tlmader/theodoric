@@ -1,13 +1,13 @@
 // If the object exists already, we’ll use it, otherwise we’ll use a new object
-var Guardian = Guardian || {};
+var Theodoric = Theodoric || {};
 
 // Initiate a new game and set the size of the entire windows
 // Phaser.AUTO means that whether the game will be rendered on a CANVAS element or using WebGL will depend on the browser
-Guardian.game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');
+Theodoric.game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '');
 
-Guardian.game.state.add('Boot', Guardian.Boot);
-Guardian.game.state.add('Preloader', Guardian.Preloader);
-Guardian.game.state.add('MainMenu', Guardian.MainMenu);
-Guardian.game.state.add('Game', Guardian.Game);
+Theodoric.game.state.add('Boot', Theodoric.Boot);
+Theodoric.game.state.add('Preloader', Theodoric.Preloader);
+Theodoric.game.state.add('MainMenu', Theodoric.MainMenu);
+Theodoric.game.state.add('Game', Theodoric.Game);
 
-Guardian.game.state.start('Boot');
+Theodoric.game.state.start('Boot');
