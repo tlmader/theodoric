@@ -1,9 +1,4 @@
-
-Theodoric.MainMenu = function (game) {
-
-	this.music;
-	this.playButton;
-};
+Theodoric.MainMenu = function (game) {};
 
 Theodoric.MainMenu.prototype = {
 
@@ -18,19 +13,17 @@ Theodoric.MainMenu.prototype = {
 		// Give it speed in x
 		this.background.autoScroll(-20, 0);
 
+		this.splash = this.add.image(this.game.world.centerX, this.game.world.centerY, 'logo');
+		this.splash.anchor.setTo(0.5);
+
 		this.music = this.add.audio('openingMusic');
 		this.music.loop = true;
 		this.music.play();
-
-		this.splash = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'logo');
-		this.splash.anchor.setTo(0.5);
 
 		this.playButton = this.add.button(this.game.width / 2, this.game.height / 2 + 50, 'playButton', this.startGame, this, 'buttonOver', 'buttonOut', 'buttonOver');
 	},
 
 	update: function () {
-
-		// Do some nice funky main menu effect here
 	},
 
 	startGame: function (pointer) {

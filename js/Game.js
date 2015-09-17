@@ -145,9 +145,14 @@ Theodoric.Game.prototype = {
 
     damagePlayer: function(player, asteroid) {
 
-        this.player.kill();
 
-        this.game.time.events.add(800, this.gameOver, this);
+        this.deadPlayer = this.game.add.sprite(this.player.x, this.player.y, 'dead');
+        this.player.kill();
+        this.deadPlayer.scale.setTo(2);
+        this.deadPlayer.animations.add('dead', [1], 10, true);
+        this.deadPlayer.animations.play('dead');
+
+        this.game.time.events.add(1000, this.gameOver, this);
     },
 
     generatePlayer: function () {
@@ -168,22 +173,6 @@ Theodoric.Game.prototype = {
         this.playerSpeed = 120;
         this.player.body.collideWorldBounds = true;
         this.player.alive = true;
-    },
-
-    generateAttacks: function () {
-
-        // Generate the group of attack objects
-        this.attacks = this.game.add.group();
-        this.attacks.enableBody = true;
-        this.attacks.physicsBodyType = Phaser.Physics.ARCADE;
-        this.attacks.createMultiple(30, 'attack');
-        this.attacks.setAll('anchor.x', 0.5);
-        this.attacks.setAll('anchor.y', 0.5);
-        this.attacks.setAll('outOfBoundsKill', true);
-        this.attacks.setAll('checkWorldBounds', true);
-
-        this.attackRate = 500;
-        this.nextAttack = 0;
     },
 
     generateEnemies: function () {
@@ -210,6 +199,22 @@ Theodoric.Game.prototype = {
 
             enemy.body.collideWorldBounds = true;
         }
+    },
+
+    generateAttacks: function () {
+
+        // Generate the group of attack objects
+        this.attacks = this.game.add.group();
+        this.attacks.enableBody = true;
+        this.attacks.physicsBodyType = Phaser.Physics.ARCADE;
+        this.attacks.createMultiple(30, 'attack');
+        this.attacks.setAll('anchor.x', 0.5);
+        this.attacks.setAll('anchor.y', 0.5);
+        this.attacks.setAll('outOfBoundsKill', true);
+        this.attacks.setAll('checkWorldBounds', true);
+
+        this.attackRate = 500;
+        this.nextAttack = 0;
     },
 
     generateSound: function () {
@@ -240,6 +245,6 @@ Theodoric.Game.prototype = {
 		this.music.stop();
 
         //  Then let's go back to the main menu.
-        this.state.start('MainMenu');
+        this.game.state.start('MainMenu', true, false);
     }
 };
