@@ -41,6 +41,8 @@ Theodoric.Game.prototype = {
 		this.music.loop = true;
 		this.music.play();
 
+        this.attackSound = this.add.audio('attackSound');
+
         // Generate the player
         this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
         this.player.scale.setTo(2);
@@ -146,7 +148,7 @@ Theodoric.Game.prototype = {
         }
 
         // Attack if left mouse button is pressed
-        if(this.game.input.activePointer.isDown) {
+        if (this.game.input.activePointer.isDown) {
             this.attack();
         }
     },
@@ -160,8 +162,9 @@ Theodoric.Game.prototype = {
             this.nextAttack = this.game.time.now + this.attackRate;
             var attack = this.attacks.getFirstDead();
             attack.reset(this.player.x + 16, this.player.y + 16);
+            attack.lifespan = 500;
             attack.rotation = this.game.physics.arcade.moveToPointer(attack, 150);
-
+            this.attackSound.play();
         }
     },
 
