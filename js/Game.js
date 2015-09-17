@@ -153,6 +153,7 @@ Theodoric.Game.prototype = {
         if (this.game.time.now > this.attacks.next && this.attacks.countDead() > 0) {
             this.attacks.next = this.game.time.now + this.attacks.rate;
             var attack = this.attacks.getFirstDead();
+            attack.scale.setTo(1.5);
             attack.reset(this.player.x + 16, this.player.y + 16);
             attack.lifespan = 500;
             attack.rotation = this.game.physics.arcade.moveToPointer(attack, 150);
