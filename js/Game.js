@@ -53,16 +53,72 @@ Guardian.Game.prototype = {
         this.playerSpeed = 120;
         this.player.body.collideWorldBounds = true;
 
+        this.wasd = {
+            up: this.game.input.keyboard.addKey(Phaser.Keyboard.W),
+            left: this.game.input.keyboard.addKey(Phaser.Keyboard.A),
+            down: this.game.input.keyboard.addKey(Phaser.Keyboard.S),
+            right: this.game.input.keyboard.addKey(Phaser.Keyboard.D),
+        };
     },
 
     update: function () {
 
-        if (this.game.input.activePointer.justPressed()) {
+        var speed = 120;
 
-            //move on the direction of the input
-            this.game.physics.arcade.moveToPointer(this.player, this.playerSpeed);
+        // Up-Left
+        if (this.wasd.up.isDown && this.wasd.left.isDown) {
+            this.player.body.velocity.x = -speed;
+            this.player.body.velocity.y = -speed;
+            this.player.animations.play('left');
+
+        // Up-Right
+        } else if (this.wasd.up.isDown && this.wasd.right.isDown) {
+            this.player.body.velocity.x = speed;
+            this.player.body.velocity.y = -speed;
+            this.player.animations.play('right');
+
+        // Down-Left
+        } else if (this.wasd.down.isDown && this.wasd.left.isDown) {
+            this.player.body.velocity.x = -speed;
+            this.player.body.velocity.y = speed;
+            this.player.animations.play('left');
+
+        // Down-Right
+        } else if (this.wasd.down.isDown && this.wasd.right.isDown) {
+            this.player.body.velocity.x = speed;
+            this.player.body.velocity.y = speed;
+            this.player.animations.play('right');
+
+        // Up
+        } else if (this.wasd.up.isDown) {
+            this.player.body.velocity.x = 0;
+            this.player.body.velocity.y = -speed;
+            this.player.animations.play('up');
+
+        // Down
+        } else if (this.wasd.down.isDown) {
+            this.player.body.velocity.x = 0;
+            this.player.body.velocity.y = speed;
+            this.player.animations.play('down');
+
+        // Left
+        } else if (this.wasd.left.isDown) {
+            this.player.body.velocity.x = -speed;
+            this.player.body.velocity.y = 0;
+            this.player.animations.play('left');
+
+        // Right
+        } else if (this.wasd.right.isDown) {
+            this.player.body.velocity.x = speed;
+            this.player.body.velocity.y = 0;
+            this.player.animations.play('right');
+
+        // Still
+        } else {
+            this.player.animations.stop();
+            this.player.body.velocity.x = 0;
+            this.player.body.velocity.y = 0;
         }
-
     },
 
     quitGame: function (pointer) {
