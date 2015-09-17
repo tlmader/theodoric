@@ -25,14 +25,18 @@ Theodoric.Preloader.prototype = {
 		this.load.setPreloadSprite(this.preloadBar);
 
 		//	Here we load the rest of the assets our game needs.
+		this.load.image('playButton', 'assets/images/play.png', 16, 16);
+
 		this.load.spritesheet('tiles', 'assets/images/tiles.png', 16, 16);
 		this.load.spritesheet('things', 'assets/images/things.png', 16, 16);
 		this.load.spritesheet('characters', 'assets/images/characters.png', 16, 16);
 		this.load.spritesheet('dead', 'assets/images/dead.png', 16, 16);
 		this.load.spritesheet('attack', 'assets/images/attack.png', 16, 16);
+
 		this.load.audio('openingMusic', 'assets/sound/opening.ogg');
 		this.load.audio('overworldMusic', 'assets/sound/overworld.ogg');
 		this.load.audio('attackSound', 'assets/sound/attack.wav');
+		this.load.audio('hurtSound', 'assets/sound/hurt.wav');
 	},
 
 	create: function () {

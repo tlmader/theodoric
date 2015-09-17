@@ -38,9 +38,18 @@ Theodoric.Game.prototype = {
 
         this.background = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'tiles', 65);
 
-        this.generateSound();
-        this.generatePlayer();
-        this.generateAttacks();
+        // Music
+		this.music = this.game.add.audio('overworldMusic');
+		this.music.loop = true;
+		this.music.play();
+
+        // Sound effects
+        this.attackSound = this.game.add.audio('attackSound');
+        this.hurtSound = this.game.add.audio('hurtSound');
+
+        this.player = this.generatePlayer();
+        this.attacks = this.generateAttacks();
+
         this.generateEnemies();
 
         this.game.physics.arcade.collide(this.player, this.enemies, this.hitAsteroid, null, this);
@@ -52,7 +61,6 @@ Theodoric.Game.prototype = {
             down: this.game.input.keyboard.addKey(Phaser.Keyboard.S),
             right: this.game.input.keyboard.addKey(Phaser.Keyboard.D),
         };
-
 
         // Set the camera
         this.game.camera.follow(this.player);
@@ -67,49 +75,49 @@ Theodoric.Game.prototype = {
 
         // Up-Left
         if (this.wasd.up.isDown && this.wasd.left.isDown) {
-            this.player.body.velocity.x = -this.playerSpeed;
-            this.player.body.velocity.y = -this.playerSpeed;
+            this.player.body.velocity.x = -this.player.speed;
+            this.player.body.velocity.y = -this.player.speed;
             this.player.animations.play('left');
 
         // Up-Right
         } else if (this.wasd.up.isDown && this.wasd.right.isDown) {
-            this.player.body.velocity.x = this.playerSpeed;
-            this.player.body.velocity.y = -this.playerSpeed;
+            this.player.body.velocity.x = this.player.speed;
+            this.player.body.velocity.y = -this.player.speed;
             this.player.animations.play('right');
 
         // Down-Left
         } else if (this.wasd.down.isDown && this.wasd.left.isDown) {
-            this.player.body.velocity.x = -this.playerSpeed;
-            this.player.body.velocity.y = this.playerSpeed;
+            this.player.body.velocity.x = -this.player.speed;
+            this.player.body.velocity.y = this.player.speed;
             this.player.animations.play('left');
 
         // Down-Right
         } else if (this.wasd.down.isDown && this.wasd.right.isDown) {
-            this.player.body.velocity.x = this.playerSpeed;
-            this.player.body.velocity.y = this.playerSpeed;
+            this.player.body.velocity.x = this.player.speed;
+            this.player.body.velocity.y = this.player.speed;
             this.player.animations.play('right');
 
         // Up
         } else if (this.wasd.up.isDown) {
             this.player.body.velocity.x = 0;
-            this.player.body.velocity.y = -this.playerSpeed;
+            this.player.body.velocity.y = -this.player.speed;
             this.player.animations.play('up');
 
         // Down
         } else if (this.wasd.down.isDown) {
             this.player.body.velocity.x = 0;
-            this.player.body.velocity.y = this.playerSpeed;
+            this.player.body.velocity.y = this.player.speed;
             this.player.animations.play('down');
 
         // Left
         } else if (this.wasd.left.isDown) {
-            this.player.body.velocity.x = -this.playerSpeed;
+            this.player.body.velocity.x = -this.player.speed;
             this.player.body.velocity.y = 0;
             this.player.animations.play('left');
 
         // Right
         } else if (this.wasd.right.isDown) {
-            this.player.body.velocity.x = this.playerSpeed;
+            this.player.body.velocity.x = this.player.speed;
             this.player.body.velocity.y = 0;
             this.player.animations.play('right');
 
@@ -126,15 +134,24 @@ Theodoric.Game.prototype = {
         }
 
         this.game.physics.arcade.collide(this.player, this.enemies, this.damagePlayer, null, this);
+
+        this.game.physics.arcade.collide(this.attacks, this.enemies, this.damagePlayer, null, this);
+
+        if (this.player.health <= 0) {
+            this.deadPlayer = this.game.add.sprite(this.player.x, this.player.y, 'dead');
+            this.player.kill();
+            this.deadPlayer.scale.setTo(2);
+            this.deadPlayer.animations.add('dead', [1], 10, true);
+            this.deadPlayer.animations.play('dead');
+
+            this.game.time.events.add(1000, this.gameOver, this);
+        }
     },
 
     attack: function () {
 
-        if (!this.player.alive) {
-            return;
-
-        } else if (this.game.time.now > this.nextAttack && this.attacks.countDead() > 0) {
-            this.nextAttack = this.game.time.now + this.attackRate;
+        if (this.game.time.now > this.attacks.next && this.attacks.countDead() > 0) {
+            this.attacks.next = this.game.time.now + this.attacks.rate;
             var attack = this.attacks.getFirstDead();
             attack.reset(this.player.x + 16, this.player.y + 16);
             attack.lifespan = 500;
@@ -143,36 +160,39 @@ Theodoric.Game.prototype = {
         }
     },
 
-    damagePlayer: function(player, asteroid) {
+    damagePlayer: function(player, enemy) {
 
-
-        this.deadPlayer = this.game.add.sprite(this.player.x, this.player.y, 'dead');
-        this.player.kill();
-        this.deadPlayer.scale.setTo(2);
-        this.deadPlayer.animations.add('dead', [1], 10, true);
-        this.deadPlayer.animations.play('dead');
-
-        this.game.time.events.add(1000, this.gameOver, this);
+        if (this.game.time.now > player.invincibilityTime) {
+            player.invincibilityTime = this.game.time.now + player.invincibilityFrames;
+            player.health -= enemy.damage;
+            this.hurtSound.play();
+            console.log(player.health);
+        }
     },
 
     generatePlayer: function () {
 
         // Generate the player
-        this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
-        this.player.scale.setTo(2);
+        var player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
+        player.scale.setTo(2);
 
         // Loop through frames 3, 4, and 5 at 10 frames a second while the animation is playing
-        this.player.animations.add('down', [3, 4, 5], 10, true);
-        this.player.animations.add('left', [15, 16, 17], 10, true);
-        this.player.animations.add('right', [27, 28, 29], 10, true);
-        this.player.animations.add('up', [39, 40, 41], 10, true);
-        this.player.animations.play('down');
+        player.animations.add('down', [3, 4, 5], 10, true);
+        player.animations.add('left', [15, 16, 17], 10, true);
+        player.animations.add('right', [27, 28, 29], 10, true);
+        player.animations.add('up', [39, 40, 41], 10, true);
+        player.animations.play('down');
 
         // Enable player physics
-        this.game.physics.arcade.enable(this.player);
-        this.playerSpeed = 120;
-        this.player.body.collideWorldBounds = true;
-        this.player.alive = true;
+        this.game.physics.arcade.enable(player);
+        player.speed = 120;
+        player.body.collideWorldBounds = true;
+        player.alive = true;
+        player.health = 100;
+        player.invincibilityTime = 0;
+        player.invincibilityFrames = 500;
+
+        return player;
     },
 
     generateEnemies: function () {
@@ -198,36 +218,28 @@ Theodoric.Game.prototype = {
             enemy.animations.play('skeletonDown');
 
             enemy.body.collideWorldBounds = true;
+            enemy.health = 100;
+            enemy.damage = 20;
         }
     },
 
     generateAttacks: function () {
 
         // Generate the group of attack objects
-        this.attacks = this.game.add.group();
-        this.attacks.enableBody = true;
-        this.attacks.physicsBodyType = Phaser.Physics.ARCADE;
-        this.attacks.createMultiple(30, 'attack');
-        this.attacks.setAll('anchor.x', 0.5);
-        this.attacks.setAll('anchor.y', 0.5);
-        this.attacks.setAll('outOfBoundsKill', true);
-        this.attacks.setAll('checkWorldBounds', true);
+        var attacks = this.game.add.group();
+        attacks.enableBody = true;
+        attacks.physicsBodyType = Phaser.Physics.ARCADE;
+        attacks.createMultiple(30, 'attack');
+        attacks.setAll('anchor.x', 0.5);
+        attacks.setAll('anchor.y', 0.5);
+        attacks.setAll('outOfBoundsKill', true);
+        attacks.setAll('checkWorldBounds', true);
 
-        this.attackRate = 500;
-        this.nextAttack = 0;
+        attacks.rate = 500;
+        attacks.next = 0;
+
+        return attacks;
     },
-
-    generateSound: function () {
-
-        // Music
-		this.music = this.add.audio('overworldMusic');
-		this.music.loop = true;
-		this.music.play();
-
-        // Sound effects
-        this.attackSound = this.add.audio('attackSound');
-    },
-
     gameOver: function() {
 
         //  Here you should destroy anything you no longer need.
