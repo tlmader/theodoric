@@ -50,7 +50,7 @@ Theodoric.Game.prototype = {
         this.player = this.generatePlayer();
         this.attacks = this.generateAttacks();
 
-        this.generateEnemies();
+        this.enemies = this.generateEnemies();
 
         this.game.physics.arcade.collide(this.player, this.enemies, this.hitAsteroid, null, this);
 
@@ -146,6 +146,8 @@ Theodoric.Game.prototype = {
 
             this.game.time.events.add(1000, this.gameOver, this);
         }
+
+        this.enemies.forEach(this.game.physics.arcade.moveToObject, this.game.physics.arcade, this, this.player, 20);
     },
 
     attack: function () {
@@ -161,13 +163,20 @@ Theodoric.Game.prototype = {
         }
     },
 
-    damagePlayer: function(player, enemy) {
+    damagePlayer: function (player, enemy) {
 
         if (this.game.time.now > player.invincibilityTime) {
             player.invincibilityTime = this.game.time.now + player.invincibilityFrames;
             player.health -= enemy.damage;
             this.hurtSound.play();
             console.log(player.health);
+        }
+    },
+
+    chasePlayer: function (player, enemy) {
+
+        if (player.alive) {
+            this.game.physics.arcade.moveToObject(enemy, player, 150);
         }
     },
 
@@ -186,8 +195,8 @@ Theodoric.Game.prototype = {
 
         // Enable player physics
         this.game.physics.arcade.enable(player);
-        player.speed = 120;
         player.body.collideWorldBounds = true;
+        player.speed = 120;
         player.alive = true;
         player.health = 100;
         player.invincibilityTime = 0;
@@ -198,18 +207,18 @@ Theodoric.Game.prototype = {
 
     generateEnemies: function () {
 
-        this.enemies = this.game.add.group();
+        enemies = this.game.add.group();
 
         // Enable physics in them
-        this.enemies.enableBody = true;
-        this.enemies.physicsBodyType = Phaser.Physics.ARCADE;
+        enemies.enableBody = true;
+        enemies.physicsBodyType = Phaser.Physics.ARCADE;
 
         var numEnemies = 100;
         var enemy;
 
         for (var i = 0; i < numEnemies; i++) {
 
-            enemy = this.enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
+            enemy = enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
             enemy.scale.setTo(2);
 
             enemy.animations.add('skeletonDown', [9, 10, 11], 10, true);
@@ -218,10 +227,15 @@ Theodoric.Game.prototype = {
             enemy.animations.add('skeletonUp', [45, 46, 47], 10, true);
             enemy.animations.play('skeletonDown');
 
+            enemy.body.velocity.x = 0,
+            enemy.body.velocity.y = 0,
             enemy.body.collideWorldBounds = true;
+            enemy.alive = true;
             enemy.health = 100;
             enemy.damage = 20;
         }
+
+        return enemies;
     },
 
     generateAttacks: function () {
