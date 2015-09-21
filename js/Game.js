@@ -92,8 +92,10 @@ Theodoric.Game.prototype = {
         // Enemies
 
         this.enemies.forEachAlive(function(enemy) {
-            this.game.physics.arcade.moveToObject(enemy, this.player, enemy.speed)
-            this.updateEnemyMovement(enemy);
+            if (enemy.visible && enemy.inCamera) {
+                this.game.physics.arcade.moveToObject(enemy, this.player, enemy.speed)
+                this.updateEnemyMovement(enemy);
+            }
         }, this);
 
         this.enemies.forEachDead(function(enemy) {
@@ -109,7 +111,7 @@ Theodoric.Game.prototype = {
             attack.scale.setTo(1.5);
             attack.reset(player.x + 16, player.y + 16);
             attack.lifespan = 500;
-            attack.rotation = this.game.physics.arcade.moveToPointer(attack, 150);
+            attack.rotation = this.game.physics.arcade.moveToPointer(attack, attack.range);
             console.log(attack.power)
             this.attackSound.play();
         }
@@ -162,6 +164,26 @@ Theodoric.Game.prototype = {
         player.invincibilityFrames = 500;
 
         return player;
+    },
+
+    generateAttacks: function () {
+
+        // Generate the group of attack objects
+        var attacks = this.game.add.group();
+        attacks.enableBody = true;
+        attacks.physicsBodyType = Phaser.Physics.ARCADE;
+        attacks.createMultiple(30, 'attack');
+        attacks.setAll('anchor.x', 0.5);
+        attacks.setAll('anchor.y', 0.5);
+        attacks.setAll('outOfBoundsKill', true);
+        attacks.setAll('checkWorldBounds', true);
+
+        attacks.setAll('power', 25, false, false, 0 , true);
+        attacks.setAll('range', 100, false, false, 0 , true);
+        attacks.rate = 500;
+        attacks.next = 0;
+
+        return attacks;
     },
 
     generateEnemies: function (health, speed, power, invincibilityFrames, deadSprite) {
@@ -307,25 +329,6 @@ Theodoric.Game.prototype = {
         enemy.invincibilityFrames = 300;
 
         return enemy;
-    },
-
-    generateAttacks: function () {
-
-        // Generate the group of attack objects
-        var attacks = this.game.add.group();
-        attacks.enableBody = true;
-        attacks.physicsBodyType = Phaser.Physics.ARCADE;
-        attacks.createMultiple(30, 'attack');
-        attacks.setAll('anchor.x', 0.5);
-        attacks.setAll('anchor.y', 0.5);
-        attacks.setAll('outOfBoundsKill', true);
-        attacks.setAll('checkWorldBounds', true);
-
-        attacks.setAll('power', 25, false, false, 0 , true);
-        attacks.rate = 500;
-        attacks.next = 0;
-
-        return attacks;
     },
 
     updatePlayerMovement: function () {
