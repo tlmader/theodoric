@@ -86,16 +86,20 @@ Theodoric.Game.prototype = {
             this.game.time.events.add(1000, this.gameOver, this);
         }
 
+        this.updatePlayerMovement();
+
+        // Enemy life
+        this.enemies.forEachAlive(function(enemy) {
+            this.updateEnemyMovement(enemy);
+        }, this);
+
         // Enemy death
-        this.enemies.forEachDead(function(item) {
+        this.enemies.forEachDead(function(enemy) {
             this.playDeath(item);
         }, this);
 
         // Allows enemies to chase player
         this.enemies.forEach(this.game.physics.arcade.moveToObject, this.game.physics.arcade, this, this.player, 20);
-
-        this.updatePlayerMovement();
-        // this.updateEnemyMovement();
     },
 
     attack: function (player, attacks) {
@@ -176,11 +180,11 @@ Theodoric.Game.prototype = {
             enemy = enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
             enemy.scale.setTo(2);
 
-            enemy.animations.add('skeletonDown', [9, 10, 11], 10, true);
-            enemy.animations.add('skeletonLeft', [21, 22, 23], 10, true);
-            enemy.animations.add('skeletonRight', [33, 34, 35], 10, true);
-            enemy.animations.add('skeletonUp', [45, 46, 47], 10, true);
-            enemy.animations.play('skeletonDown');
+            enemy.animations.add('down', [9, 10, 11], 10, true);
+            enemy.animations.add('left', [21, 22, 23], 10, true);
+            enemy.animations.add('right', [33, 34, 35], 10, true);
+            enemy.animations.add('up', [45, 46, 47], 10, true);
+            enemy.animations.play('down');
 
             enemy.body.velocity.x = 0,
             enemy.body.velocity.y = 0,
@@ -276,59 +280,21 @@ Theodoric.Game.prototype = {
 
     updateEnemyMovement: function (enemy) {
 
-        // Up-Left
-        if (this.wasd.up.isDown && this.wasd.left.isDown) {
-            enemy.body.velocity.x = -enemy.speed;
-            enemy.body.velocity.y = -enemy.speed;
-            enemy.animations.play('left');
+        // Left animation
+        if (enemy.body.velocity.x < 0 && enemy.body.velocity.x <= -Math.abs(enemy.body.velocity.y)) {
+             enemy.animations.play('left');
 
-        // Up-Right
-        } else if (this.wasd.up.isDown && this.wasd.right.isDown) {
-            this.player.body.velocity.x = this.player.speed;
-            this.player.body.velocity.y = -this.player.speed;
-            this.player.animations.play('right');
+        // Right animation
+        } else if (enemy.body.velocity.x > 0 && enemy.body.velocity.x >= Math.abs(enemy.body.velocity.y)) {
+             enemy.animations.play('right');
 
-        // Down-Left
-        } else if (this.wasd.down.isDown && this.wasd.left.isDown) {
-            this.player.body.velocity.x = -this.player.speed;
-            this.player.body.velocity.y = this.player.speed;
-            this.player.animations.play('left');
+        // Up animation
+        } else if (enemy.body.velocity.y < 0 && enemy.body.velocity.y <= -Math.abs(enemy.body.velocity.x)) {
+            enemy.animations.play('up');
 
-        // Down-Right
-        } else if (this.wasd.down.isDown && this.wasd.right.isDown) {
-            this.player.body.velocity.x = this.player.speed;
-            this.player.body.velocity.y = this.player.speed;
-            this.player.animations.play('right');
-
-        // Up
-        } else if (this.wasd.up.isDown) {
-            this.player.body.velocity.x = 0;
-            this.player.body.velocity.y = -this.player.speed;
-            this.player.animations.play('up');
-
-        // Down
-        } else if (this.wasd.down.isDown) {
-            this.player.body.velocity.x = 0;
-            this.player.body.velocity.y = this.player.speed;
-            this.player.animations.play('down');
-
-        // Left
-        } else if (this.wasd.left.isDown) {
-            this.player.body.velocity.x = -this.player.speed;
-            this.player.body.velocity.y = 0;
-            this.player.animations.play('left');
-
-        // Right
-        } else if (this.wasd.right.isDown) {
-            this.player.body.velocity.x = this.player.speed;
-            this.player.body.velocity.y = 0;
-            this.player.animations.play('right');
-
-        // Still
+        // Down animation
         } else {
-            this.player.animations.stop();
-            this.player.body.velocity.x = 0;
-            this.player.body.velocity.y = 0;
+            enemy.animations.play('down');
         }
     },
 
