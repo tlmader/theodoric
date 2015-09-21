@@ -72,34 +72,33 @@ Theodoric.Game.prototype = {
     update: function () {
 
         // Collision
+
         this.game.physics.arcade.collide(this.player, this.enemies, this.hit, null, this);
         this.game.physics.arcade.collide(this.enemies, this.playerAttacks, this.hit, null, this);
 
-        // Attack if left mouse button is pressed
+        // Player
+        this.updatePlayerMovement();
+
+        // Attack towards mouse click
         if (this.game.input.activePointer.isDown) {
             this.attack(this.player, this.playerAttacks);
         }
 
-        // Player death
         if (!this.player.alive) {
             this.playDeath(this.player);
             this.game.time.events.add(1000, this.gameOver, this);
         }
 
-        this.updatePlayerMovement();
+        // Enemies
 
-        // Enemy life
         this.enemies.forEachAlive(function(enemy) {
+            this.game.physics.arcade.moveToObject(enemy, this.player, enemy.speed)
             this.updateEnemyMovement(enemy);
         }, this);
 
-        // Enemy death
         this.enemies.forEachDead(function(enemy) {
-            this.playDeath(item);
+            this.playDeath(enemy);
         }, this);
-
-        // Allows enemies to chase player
-        this.enemies.forEach(this.game.physics.arcade.moveToObject, this.game.physics.arcade, this, this.player, 20);
     },
 
     attack: function (player, attacks) {
@@ -133,6 +132,7 @@ Theodoric.Game.prototype = {
         dead.scale.setTo(2);
         dead.animations.add('dead', [target.deadSprite], 10, true);
         dead.animations.play('dead');
+        dead.lifespan = 3000;
         if (target !== this.player) {
             target.destroy();
         }
@@ -177,28 +177,136 @@ Theodoric.Game.prototype = {
 
         for (var i = 0; i < amount; i++) {
 
+            var rnd = Math.random();
             enemy = enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
-            enemy.scale.setTo(2);
-
-            enemy.animations.add('down', [9, 10, 11], 10, true);
-            enemy.animations.add('left', [21, 22, 23], 10, true);
-            enemy.animations.add('right', [33, 34, 35], 10, true);
-            enemy.animations.add('up', [45, 46, 47], 10, true);
-            enemy.animations.play('down');
-
-            enemy.body.velocity.x = 0,
-            enemy.body.velocity.y = 0,
-            enemy.body.collideWorldBounds = true;
-            enemy.alive = true;
-            enemy.health = 50;
-            enemy.speed = 100;
-            enemy.power = 10;
-            enemy.deadSprite = 6;
-            enemy.invincibilityTime = 0;
-            enemy.invincibilityFrames = 500;
+            if (rnd >= 0 && rnd < .3) this.generateSkeleton(enemy);
+            else if (rnd >= .3 && rnd < .4) this.generateSlime(enemy);
+            else if (rnd >= .4 && rnd < .6) this.generateBat(enemy);
+            else if (rnd >= .6 && rnd < .7) this.generateGhost(enemy);
+            else if (rnd >= .7 && rnd < 1) this.generateSpider(enemy);
         }
 
         return enemies;
+    },
+
+    generateSkeleton: function (enemy) {
+
+        enemy.scale.setTo(2);
+
+        enemy.animations.add('down', [9, 10, 11], 10, true);
+        enemy.animations.add('left', [21, 22, 23], 10, true);
+        enemy.animations.add('right', [33, 34, 35], 10, true);
+        enemy.animations.add('up', [45, 46, 47], 10, true);
+        enemy.animations.play('down');
+
+        enemy.body.velocity.x = 0,
+        enemy.body.velocity.y = 0,
+        enemy.body.collideWorldBounds = true;
+        enemy.alive = true;
+        enemy.health = 50;
+        enemy.speed = 100;
+        enemy.power = 20;
+        enemy.deadSprite = 6;
+        enemy.invincibilityTime = 0;
+        enemy.invincibilityFrames = 300;
+
+        return enemy;
+    },
+
+    generateSlime: function (enemy) {
+
+        enemy.scale.setTo(2);
+
+        enemy.animations.add('down', [48, 49, 50], 10, true);
+        enemy.animations.add('left', [60, 61, 62], 10, true);
+        enemy.animations.add('right', [72, 73, 74], 10, true);
+        enemy.animations.add('up', [84, 85, 86], 10, true);
+        enemy.animations.play('down');
+
+        enemy.body.velocity.x = 0,
+        enemy.body.velocity.y = 0,
+        enemy.body.collideWorldBounds = true;
+        enemy.alive = true;
+        enemy.health = 200;
+        enemy.speed = 60;
+        enemy.power = 40;
+        enemy.deadSprite = 7;
+        enemy.invincibilityTime = 0;
+        enemy.invincibilityFrames = 300;
+
+        return enemy;
+    },
+
+    generateBat: function (enemy) {
+
+        enemy.scale.setTo(2);
+
+        enemy.animations.add('down', [51, 52, 53], 10, true);
+        enemy.animations.add('left', [63, 64, 65], 10, true);
+        enemy.animations.add('right', [75, 76, 77], 10, true);
+        enemy.animations.add('up', [87, 88, 89], 10, true);
+        enemy.animations.play('down');
+
+        enemy.body.velocity.x = 0,
+        enemy.body.velocity.y = 0,
+        enemy.body.collideWorldBounds = true;
+        enemy.alive = true;
+        enemy.health = 25;
+        enemy.speed = 200;
+        enemy.power = 10;
+        enemy.deadSprite = 8;
+        enemy.invincibilityTime = 0;
+        enemy.invincibilityFrames = 300;
+
+        return enemy;
+    },
+
+    generateGhost: function (enemy) {
+
+        enemy.scale.setTo(2);
+
+        enemy.animations.add('down', [54, 55, 56], 10, true);
+        enemy.animations.add('left', [66, 67, 68], 10, true);
+        enemy.animations.add('right', [78, 79, 80], 10, true);
+        enemy.animations.add('up', [90, 91, 92], 10, true);
+        enemy.animations.play('down');
+
+        enemy.body.velocity.x = 0,
+        enemy.body.velocity.y = 0,
+        enemy.body.collideWorldBounds = true;
+        enemy.alive = true;
+        enemy.health = 100;
+        enemy.speed = 120;
+        enemy.power = 30;
+        enemy.deadSprite = 9;
+        enemy.invincibilityTime = 0;
+        enemy.invincibilityFrames = 300;
+
+        return enemy;
+    },
+
+    generateSpider: function (enemy) {
+
+        enemy.scale.setTo(2);
+
+        enemy.animations.add('down', [57, 58, 59], 10, true);
+        enemy.animations.add('left', [69, 70, 71], 10, true);
+        enemy.animations.add('right', [75, 76, 77], 10, true);
+        enemy.animations.add('up', [87, 88, 89], 10, true);
+        enemy.animations.play('down');
+
+        enemy.body.velocity.x = 0,
+        enemy.body.velocity.y = 0,
+        enemy.body.collideWorldBounds = true;
+        enemy.alive = true;
+        enemy.health = 50;
+        enemy.speed = 150;
+        enemy.power = 12;
+        enemy.deadSprite = 10;
+        enemy.invincibilityTime = 0;
+        enemy.invincibilityFrames = 300;
+
+        return enemy;
     },
 
     generateAttacks: function () {
