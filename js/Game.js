@@ -48,7 +48,7 @@ Theodoric.Game.prototype = {
         this.hurtSound = this.game.add.audio('hurtSound');
 
         this.player = this.generatePlayer();
-        this.attacks = this.generateAttacks();
+        this.playerAttacks = this.generateAttacks();
 
         this.enemies = this.generateEnemies();
 
@@ -71,7 +71,152 @@ Theodoric.Game.prototype = {
 
     update: function () {
 
-        // Movement
+        // Collision
+        this.game.physics.arcade.collide(this.player, this.enemies, this.hit, null, this);
+        this.game.physics.arcade.collide(this.enemies, this.playerAttacks, this.hit, null, this);
+
+        // Attack if left mouse button is pressed
+        if (this.game.input.activePointer.isDown) {
+            this.attack(this.player, this.playerAttacks);
+        }
+
+        // Player death
+        if (!this.player.alive) {
+            this.playDeath(this.player);
+            this.game.time.events.add(1000, this.gameOver, this);
+        }
+
+        // Enemy death
+        this.enemies.forEachDead(function(item) {
+            this.playDeath(item);
+        }, this);
+
+        // Allows enemies to chase player
+        this.enemies.forEach(this.game.physics.arcade.moveToObject, this.game.physics.arcade, this, this.player, 20);
+
+        this.updatePlayerMovement();
+        // this.updateEnemyMovement();
+    },
+
+    attack: function (player, attacks) {
+
+        if (player.alive && this.game.time.now > attacks.next && attacks.countDead() > 0) {
+            attacks.next = this.game.time.now + attacks.rate;
+            var attack = attacks.getFirstDead();
+            attack.scale.setTo(1.5);
+            attack.reset(player.x + 16, player.y + 16);
+            attack.lifespan = 500;
+            attack.rotation = this.game.physics.arcade.moveToPointer(attack, 150);
+            console.log(attack.power)
+            this.attackSound.play();
+        }
+    },
+
+    hit: function (target, attacker) {
+
+        if (this.game.time.now > target.invincibilityTime) {
+            target.invincibilityTime = this.game.time.now + target.invincibilityFrames;
+            target.damage(attacker.power)
+            this.hurtSound.play();
+
+            console.log(target.health);
+            console.log(attacker.power);
+        }
+    },
+
+    playDeath: function (target) {
+        var dead = this.game.add.sprite(target.x, target.y, 'dead')
+        dead.scale.setTo(2);
+        dead.animations.add('dead', [target.deadSprite], 10, true);
+        dead.animations.play('dead');
+        if (target !== this.player) {
+            target.destroy();
+        }
+    },
+
+    generatePlayer: function () {
+
+        // Generate the player
+        var player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
+        player.scale.setTo(2);
+
+        // Loop through frames 3, 4, and 5 at 10 frames a second while the animation is playing
+        player.animations.add('down', [3, 4, 5], 10, true);
+        player.animations.add('left', [15, 16, 17], 10, true);
+        player.animations.add('right', [27, 28, 29], 10, true);
+        player.animations.add('up', [39, 40, 41], 10, true);
+        player.animations.play('down');
+
+        // Enable player physics
+        this.game.physics.arcade.enable(player);
+        player.body.collideWorldBounds = true;
+        player.alive = true;
+        player.health = 100;
+        player.speed = 120;
+        player.deadSprite = 1;
+        player.invincibilityTime = 0;
+        player.invincibilityFrames = 500;
+
+        return player;
+    },
+
+    generateEnemies: function (health, speed, power, invincibilityFrames, deadSprite) {
+
+        enemies = this.game.add.group();
+
+        // Enable physics in them
+        enemies.enableBody = true;
+        enemies.physicsBodyType = Phaser.Physics.ARCADE;
+
+        var amount = 100;
+        var enemy;
+
+        for (var i = 0; i < amount; i++) {
+
+            enemy = enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
+            enemy.scale.setTo(2);
+
+            enemy.animations.add('skeletonDown', [9, 10, 11], 10, true);
+            enemy.animations.add('skeletonLeft', [21, 22, 23], 10, true);
+            enemy.animations.add('skeletonRight', [33, 34, 35], 10, true);
+            enemy.animations.add('skeletonUp', [45, 46, 47], 10, true);
+            enemy.animations.play('skeletonDown');
+
+            enemy.body.velocity.x = 0,
+            enemy.body.velocity.y = 0,
+            enemy.body.collideWorldBounds = true;
+            enemy.alive = true;
+            enemy.health = 50;
+            enemy.speed = 100;
+            enemy.power = 10;
+            enemy.deadSprite = 6;
+            enemy.invincibilityTime = 0;
+            enemy.invincibilityFrames = 500;
+        }
+
+        return enemies;
+    },
+
+    generateAttacks: function () {
+
+        // Generate the group of attack objects
+        var attacks = this.game.add.group();
+        attacks.enableBody = true;
+        attacks.physicsBodyType = Phaser.Physics.ARCADE;
+        attacks.createMultiple(30, 'attack');
+        attacks.setAll('anchor.x', 0.5);
+        attacks.setAll('anchor.y', 0.5);
+        attacks.setAll('outOfBoundsKill', true);
+        attacks.setAll('checkWorldBounds', true);
+
+        attacks.setAll('power', 25, false, false, 0 , true);
+        attacks.rate = 500;
+        attacks.next = 0;
+
+        return attacks;
+    },
+
+    updatePlayerMovement: function () {
 
         // Up-Left
         if (this.wasd.up.isDown && this.wasd.left.isDown) {
@@ -127,134 +272,66 @@ Theodoric.Game.prototype = {
             this.player.body.velocity.x = 0;
             this.player.body.velocity.y = 0;
         }
+    },
 
-        // Attack if left mouse button is pressed
-        if (this.game.input.activePointer.isDown) {
-            this.attack();
+    updateEnemyMovement: function (enemy) {
+
+        // Up-Left
+        if (this.wasd.up.isDown && this.wasd.left.isDown) {
+            enemy.body.velocity.x = -enemy.speed;
+            enemy.body.velocity.y = -enemy.speed;
+            enemy.animations.play('left');
+
+        // Up-Right
+        } else if (this.wasd.up.isDown && this.wasd.right.isDown) {
+            this.player.body.velocity.x = this.player.speed;
+            this.player.body.velocity.y = -this.player.speed;
+            this.player.animations.play('right');
+
+        // Down-Left
+        } else if (this.wasd.down.isDown && this.wasd.left.isDown) {
+            this.player.body.velocity.x = -this.player.speed;
+            this.player.body.velocity.y = this.player.speed;
+            this.player.animations.play('left');
+
+        // Down-Right
+        } else if (this.wasd.down.isDown && this.wasd.right.isDown) {
+            this.player.body.velocity.x = this.player.speed;
+            this.player.body.velocity.y = this.player.speed;
+            this.player.animations.play('right');
+
+        // Up
+        } else if (this.wasd.up.isDown) {
+            this.player.body.velocity.x = 0;
+            this.player.body.velocity.y = -this.player.speed;
+            this.player.animations.play('up');
+
+        // Down
+        } else if (this.wasd.down.isDown) {
+            this.player.body.velocity.x = 0;
+            this.player.body.velocity.y = this.player.speed;
+            this.player.animations.play('down');
+
+        // Left
+        } else if (this.wasd.left.isDown) {
+            this.player.body.velocity.x = -this.player.speed;
+            this.player.body.velocity.y = 0;
+            this.player.animations.play('left');
+
+        // Right
+        } else if (this.wasd.right.isDown) {
+            this.player.body.velocity.x = this.player.speed;
+            this.player.body.velocity.y = 0;
+            this.player.animations.play('right');
+
+        // Still
+        } else {
+            this.player.animations.stop();
+            this.player.body.velocity.x = 0;
+            this.player.body.velocity.y = 0;
         }
-
-        this.game.physics.arcade.collide(this.player, this.enemies, this.damagePlayer, null, this);
-
-        this.game.physics.arcade.collide(this.attacks, this.enemies, this.damagePlayer, null, this);
-
-        if (this.player.health <= 0) {
-            this.deadPlayer = this.game.add.sprite(this.player.x, this.player.y, 'dead');
-            this.player.kill();
-            this.deadPlayer.scale.setTo(2);
-            this.deadPlayer.animations.add('dead', [1], 10, true);
-            this.deadPlayer.animations.play('dead');
-
-            this.game.time.events.add(1000, this.gameOver, this);
-        }
-
-        this.enemies.forEach(this.game.physics.arcade.moveToObject, this.game.physics.arcade, this, this.player, 20);
     },
 
-    attack: function () {
-
-        if (this.game.time.now > this.attacks.next && this.attacks.countDead() > 0) {
-            this.attacks.next = this.game.time.now + this.attacks.rate;
-            var attack = this.attacks.getFirstDead();
-            attack.scale.setTo(1.5);
-            attack.reset(this.player.x + 16, this.player.y + 16);
-            attack.lifespan = 500;
-            attack.rotation = this.game.physics.arcade.moveToPointer(attack, 150);
-            this.attackSound.play();
-        }
-    },
-
-    damagePlayer: function (player, enemy) {
-
-        if (this.game.time.now > player.invincibilityTime) {
-            player.invincibilityTime = this.game.time.now + player.invincibilityFrames;
-            player.health -= enemy.damage;
-            this.hurtSound.play();
-            console.log(player.health);
-        }
-    },
-
-    chasePlayer: function (player, enemy) {
-
-        if (player.alive) {
-            this.game.physics.arcade.moveToObject(enemy, player, 150);
-        }
-    },
-
-    generatePlayer: function () {
-
-        // Generate the player
-        var player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'characters');
-        player.scale.setTo(2);
-
-        // Loop through frames 3, 4, and 5 at 10 frames a second while the animation is playing
-        player.animations.add('down', [3, 4, 5], 10, true);
-        player.animations.add('left', [15, 16, 17], 10, true);
-        player.animations.add('right', [27, 28, 29], 10, true);
-        player.animations.add('up', [39, 40, 41], 10, true);
-        player.animations.play('down');
-
-        // Enable player physics
-        this.game.physics.arcade.enable(player);
-        player.body.collideWorldBounds = true;
-        player.speed = 120;
-        player.alive = true;
-        player.health = 100;
-        player.invincibilityTime = 0;
-        player.invincibilityFrames = 500;
-
-        return player;
-    },
-
-    generateEnemies: function () {
-
-        enemies = this.game.add.group();
-
-        // Enable physics in them
-        enemies.enableBody = true;
-        enemies.physicsBodyType = Phaser.Physics.ARCADE;
-
-        var numEnemies = 100;
-        var enemy;
-
-        for (var i = 0; i < numEnemies; i++) {
-
-            enemy = enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
-            enemy.scale.setTo(2);
-
-            enemy.animations.add('skeletonDown', [9, 10, 11], 10, true);
-            enemy.animations.add('skeletonLeft', [21, 22, 23], 10, true);
-            enemy.animations.add('skeletonRight', [33, 34, 35], 10, true);
-            enemy.animations.add('skeletonUp', [45, 46, 47], 10, true);
-            enemy.animations.play('skeletonDown');
-
-            enemy.body.velocity.x = 0,
-            enemy.body.velocity.y = 0,
-            enemy.body.collideWorldBounds = true;
-            enemy.alive = true;
-            enemy.health = 100;
-            enemy.damage = 20;
-        }
-
-        return enemies;
-    },
-
-    generateAttacks: function () {
-
-        // Generate the group of attack objects
-        var attacks = this.game.add.group();
-        attacks.enableBody = true;
-        attacks.physicsBodyType = Phaser.Physics.ARCADE;
-        attacks.createMultiple(30, 'attack');
-        attacks.setAll('anchor.x', 0.5);
-        attacks.setAll('anchor.y', 0.5);
-        attacks.setAll('outOfBoundsKill', true);
-        attacks.setAll('checkWorldBounds', true);
-
-        attacks.rate = 500;
-        attacks.next = 0;
-
-        return attacks;
-    },
     gameOver: function() {
 
         //  Here you should destroy anything you no longer need.
