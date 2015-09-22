@@ -36,7 +36,13 @@ Theodoric.Preloader.prototype = {
 		this.load.audio('openingMusic', 'assets/sound/opening.ogg');
 		this.load.audio('overworldMusic', 'assets/sound/overworld.ogg');
 		this.load.audio('attackSound', 'assets/sound/attack.wav');
-		this.load.audio('hurtSound', 'assets/sound/hurt.wav');
+		this.load.audio('playerSound', 'assets/sound/player.wav');
+		this.load.audio('skeletonSound', 'assets/sound/skeleton.wav');
+		this.load.audio('slimeSound', 'assets/sound/slime.wav');
+		this.load.audio('batSound', 'assets/sound/bat.wav');
+		this.load.audio('ghostSound', 'assets/sound/ghost.wav');
+		this.load.audio('spiderSound', 'assets/sound/spider.wav');
+		this.load.audio('goldSound', 'assets/sound/gold.wav');
 	},
 
 	create: function () {

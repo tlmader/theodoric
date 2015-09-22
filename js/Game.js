@@ -46,12 +46,16 @@ Theodoric.Game.prototype = {
 
         // Sound effects
         this.attackSound = this.game.add.audio('attackSound');
-        this.hurtSound = this.game.add.audio('hurtSound');
+        this.playerSound = this.game.add.audio('playerSound');
+        this.skeletonSound = this.game.add.audio('skeletonSound');
+        this.slimeSound = this.game.add.audio('slimeSound');
+        this.batSound = this.game.add.audio('batSound');
+        this.ghostSound = this.game.add.audio('ghostSound');
+        this.spiderSound = this.game.add.audio('spiderSound');
+        this.goldSound = this.game.add.audio('goldSound');
 
         this.player = this.generatePlayer();
         this.playerAttacks = this.generateAttacks();
-
-        this.enemies = this.generateEnemies();
 
         this.game.physics.arcade.collide(this.player, this.enemies, this.hitAsteroid, null, this);
 
@@ -65,6 +69,8 @@ Theodoric.Game.prototype = {
 
         // Set the camera
         this.game.camera.follow(this.player);
+
+        this.enemies = this.generateEnemies();
 
         // Player initial score of zero
         this.score = 0;
@@ -115,6 +121,7 @@ Theodoric.Game.prototype = {
 
         this.enemies.forEachDead(function(enemy) {
             this.playDeath(enemy);
+            this.generateEnemy;
         }, this);
 
         // Labels
@@ -128,6 +135,7 @@ Theodoric.Game.prototype = {
         if (player.alive && this.game.time.now > attacks.next && attacks.countDead() > 0) {
             attacks.next = this.game.time.now + attacks.rate;
             var attack = attacks.getFirstDead();
+            attack.scale.setTo(1.5);
             attack.reset(player.x + 16, player.y + 16);
             attack.lifespan = 500;
             attack.rotation = this.game.physics.arcade.moveToPointer(attack, attack.range);
@@ -141,7 +149,10 @@ Theodoric.Game.prototype = {
         if (this.game.time.now > target.invincibilityTime) {
             target.invincibilityTime = this.game.time.now + target.invincibilityFrames;
             target.damage(attacker.power)
-            this.hurtSound.play();
+            if (target.health < 0) {
+                target.health = 0;
+            }
+            this.playHurtSound(target.name);
         }
     },
 
@@ -150,6 +161,7 @@ Theodoric.Game.prototype = {
             collectable.collected = true;
             this.score++;
             collectable.animations.play('open');
+            this.goldSound.play();
             collectable.lifespan = 1000;
         }
     },
@@ -161,7 +173,8 @@ Theodoric.Game.prototype = {
         dead.animations.play('dead');
         dead.lifespan = 3000;
         if (target !== this.player) {
-            target.destroy();
+            target.destroy()
+            this.generateEnemy(this.enemies);
         }
     },
 
@@ -208,6 +221,7 @@ Theodoric.Game.prototype = {
         player.deadSprite = 1;
         player.invincibilityTime = 0;
         player.invincibilityFrames = 500;
+        player.name = "player";
 
         return player;
     },
@@ -225,7 +239,7 @@ Theodoric.Game.prototype = {
         attacks.setAll('checkWorldBounds', true);
 
         attacks.setAll('power', 25, false, false, 0 , true);
-        attacks.setAll('range', 100, false, false, 0 , true);
+        attacks.setAll('range', 70, false, false, 0 , true);
         attacks.rate = 500;
         attacks.next = 0;
 
@@ -245,16 +259,26 @@ Theodoric.Game.prototype = {
 
         for (var i = 0; i < amount; i++) {
 
-            var rnd = Math.random();
-            enemy = enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
-            if (rnd >= 0 && rnd < .3) this.generateSkeleton(enemy);
-            else if (rnd >= .3 && rnd < .4) this.generateSlime(enemy);
-            else if (rnd >= .4 && rnd < .6) this.generateBat(enemy);
-            else if (rnd >= .6 && rnd < .7) this.generateGhost(enemy);
-            else if (rnd >= .7 && rnd < 1) this.generateSpider(enemy);
+            this.generateEnemy(enemies);
         }
 
         return enemies;
+    },
+
+    generateEnemy: function (enemies) {
+
+        var rnd = Math.random();
+        var enemy = enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
+
+        do {
+            enemy.reset(this.game.world.randomX, this.game.world.randomY);
+        } while (Phaser.Math.distance(this.player.x, this.player.y, enemy.x, enemy.y) <= 300)
+
+        if (rnd >= 0 && rnd < .3) this.generateSkeleton(enemy);
+        else if (rnd >= .3 && rnd < .4) this.generateSlime(enemy);
+        else if (rnd >= .4 && rnd < .6) this.generateBat(enemy);
+        else if (rnd >= .6 && rnd < .7) this.generateGhost(enemy);
+        else if (rnd >= .7 && rnd < 1) this.generateSpider(enemy);
     },
 
     generateSkeleton: function (enemy) {
@@ -277,6 +301,7 @@ Theodoric.Game.prototype = {
         enemy.deadSprite = 6;
         enemy.invincibilityTime = 0;
         enemy.invincibilityFrames = 300;
+        enemy.name = "skeleton";
 
         return enemy;
     },
@@ -301,6 +326,7 @@ Theodoric.Game.prototype = {
         enemy.deadSprite = 7;
         enemy.invincibilityTime = 0;
         enemy.invincibilityFrames = 300;
+        enemy.name = "slime";
 
         return enemy;
     },
@@ -325,6 +351,7 @@ Theodoric.Game.prototype = {
         enemy.deadSprite = 8;
         enemy.invincibilityTime = 0;
         enemy.invincibilityFrames = 300;
+        enemy.name = "bat";
 
         return enemy;
     },
@@ -349,6 +376,7 @@ Theodoric.Game.prototype = {
         enemy.deadSprite = 9;
         enemy.invincibilityTime = 0;
         enemy.invincibilityFrames = 300;
+        enemy.name = "ghost";
 
         return enemy;
     },
@@ -373,6 +401,7 @@ Theodoric.Game.prototype = {
         enemy.deadSprite = 10;
         enemy.invincibilityTime = 0;
         enemy.invincibilityFrames = 300;
+        enemy.name = "spider";
 
         return enemy;
     },
@@ -452,6 +481,28 @@ Theodoric.Game.prototype = {
         // Down animation
         } else {
             enemy.animations.play('down');
+        }
+    },
+
+    playHurtSound: function (name) {
+
+        if (name === "player") {
+            this.playerSound.play();
+
+        } else if (name === "skeleton") {
+            this.skeletonSound.play();
+
+        } else if (name === "slime") {
+            this.slimeSound.play();
+
+        } else if (name === "bat") {
+            this.batSound.play();
+
+        } else if (name === "ghost") {
+            this.ghostSound.play();
+
+        } else if (name === "spider") {
+            this.spiderSound.play();
         }
     },
 
