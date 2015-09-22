@@ -37,6 +37,7 @@ Theodoric.Game.prototype = {
         this.game.world.setBounds(0, 0, 1920, 1920);
 
         this.background = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'tiles', 65);
+        this.collectables = this.generateCollectables();
 
         // Music
 		this.music = this.game.add.audio('overworldMusic');
@@ -66,7 +67,20 @@ Theodoric.Game.prototype = {
         this.game.camera.follow(this.player);
 
         // Player initial score of zero
-        this.playerScore = 0;
+        this.score = 0;
+
+        this.showLabels();
+    },
+
+    showLabels: function() {
+        var text = "0";
+        var style = { font: "20px Arial", fill: "#fff", align: "center" };
+        this.scoreLabel = this.game.add.text(this.game.width - 50, this.game.height - 50, text, style);
+        this.scoreLabel.fixedToCamera = true;
+
+        style = { font: "20px Arial", fill: "#f00", align: "center" };
+        this.healthLabel = this.game.add.text(this.game.width - 100, this.game.height - 50, text, style);
+        this.healthLabel.fixedToCamera = true;
     },
 
     update: function () {
@@ -75,6 +89,7 @@ Theodoric.Game.prototype = {
 
         this.game.physics.arcade.collide(this.player, this.enemies, this.hit, null, this);
         this.game.physics.arcade.collide(this.enemies, this.playerAttacks, this.hit, null, this);
+        this.game.physics.arcade.overlap(this.player, this.collectables, this.collect, null, this);
 
         // Player
         this.updatePlayerMovement();
@@ -101,6 +116,11 @@ Theodoric.Game.prototype = {
         this.enemies.forEachDead(function(enemy) {
             this.playDeath(enemy);
         }, this);
+
+        // Labels
+
+        this.scoreLabel.text = this.score;
+        this.healthLabel.text = this.player.health;
     },
 
     attack: function (player, attacks) {
@@ -108,7 +128,6 @@ Theodoric.Game.prototype = {
         if (player.alive && this.game.time.now > attacks.next && attacks.countDead() > 0) {
             attacks.next = this.game.time.now + attacks.rate;
             var attack = attacks.getFirstDead();
-            attack.scale.setTo(1.5);
             attack.reset(player.x + 16, player.y + 16);
             attack.lifespan = 500;
             attack.rotation = this.game.physics.arcade.moveToPointer(attack, attack.range);
@@ -123,9 +142,15 @@ Theodoric.Game.prototype = {
             target.invincibilityTime = this.game.time.now + target.invincibilityFrames;
             target.damage(attacker.power)
             this.hurtSound.play();
+        }
+    },
 
-            console.log(target.health);
-            console.log(attacker.power);
+    collect: function(player, collectable) {
+        if (!collectable.collected) {
+            collectable.collected = true;
+            this.score++;
+            collectable.animations.play('open');
+            collectable.lifespan = 1000;
         }
     },
 
@@ -138,6 +163,27 @@ Theodoric.Game.prototype = {
         if (target !== this.player) {
             target.destroy();
         }
+    },
+
+    generateCollectables: function () {
+
+        var collectables = this.game.add.group();
+
+        collectables.enableBody = true;
+        collectables.physicsBodyType = Phaser.Physics.ARCADE;
+
+        var amount = this.game.rnd.integerInRange(100, 500);
+        var collectable;
+
+        for (var i = 0; i < amount; i++) {
+            collectable = collectables.create(this.game.world.randomX, this.game.world.randomY, 'things');
+            collectable.scale.setTo(2);
+            collectable.animations.add('idle', [6], 10, true);
+            collectable.animations.add('open', [18, 30, 42], 8, false);
+            collectable.animations.play('idle');
+        }
+
+        return collectables;
     },
 
     generatePlayer: function () {
@@ -188,7 +234,7 @@ Theodoric.Game.prototype = {
 
     generateEnemies: function (health, speed, power, invincibilityFrames, deadSprite) {
 
-        enemies = this.game.add.group();
+        var enemies = this.game.add.group();
 
         // Enable physics in them
         enemies.enableBody = true;
@@ -225,8 +271,8 @@ Theodoric.Game.prototype = {
         enemy.body.velocity.y = 0,
         enemy.body.collideWorldBounds = true;
         enemy.alive = true;
-        enemy.health = 50;
-        enemy.speed = 60;
+        enemy.health = 100;
+        enemy.speed = 70;
         enemy.power = 20;
         enemy.deadSprite = 6;
         enemy.invincibilityTime = 0;
@@ -250,7 +296,7 @@ Theodoric.Game.prototype = {
         enemy.body.collideWorldBounds = true;
         enemy.alive = true;
         enemy.health = 500;
-        enemy.speed = 20;
+        enemy.speed = 30;
         enemy.power = 40;
         enemy.deadSprite = 7;
         enemy.invincibilityTime = 0;
@@ -274,7 +320,7 @@ Theodoric.Game.prototype = {
         enemy.body.collideWorldBounds = true;
         enemy.alive = true;
         enemy.health = 25;
-        enemy.speed = 120;
+        enemy.speed = 200;
         enemy.power = 10;
         enemy.deadSprite = 8;
         enemy.invincibilityTime = 0;
@@ -313,8 +359,8 @@ Theodoric.Game.prototype = {
 
         enemy.animations.add('down', [57, 58, 59], 10, true);
         enemy.animations.add('left', [69, 70, 71], 10, true);
-        enemy.animations.add('right', [75, 76, 77], 10, true);
-        enemy.animations.add('up', [87, 88, 89], 10, true);
+        enemy.animations.add('right', [81, 82, 83], 10, true);
+        enemy.animations.add('up', [93, 94, 95], 10, true);
         enemy.animations.play('down');
 
         enemy.body.velocity.x = 0,
@@ -322,7 +368,7 @@ Theodoric.Game.prototype = {
         enemy.body.collideWorldBounds = true;
         enemy.alive = true;
         enemy.health = 50;
-        enemy.speed = 80;
+        enemy.speed = 120;
         enemy.power = 12;
         enemy.deadSprite = 10;
         enemy.invincibilityTime = 0;
