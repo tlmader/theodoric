@@ -70,8 +70,10 @@ Theodoric.Game.prototype = {
         // Set the camera
         this.game.camera.follow(this.player);
 
-        this.enemies = this.generateEnemies();
+        // Modifies the attack and health of generated enemies
+        this.modifier = 0;
 
+        this.enemies = this.generateEnemies();
         // Player initial score of zero
         this.score = 0;
 
@@ -122,7 +124,10 @@ Theodoric.Game.prototype = {
         this.enemies.forEachDead(function(enemy) {
             this.playDeath(enemy);
             this.generateEnemy;
+            this.score += enemy.reward;
         }, this);
+
+        this.modifier = Math.floor(this.score / 5);
 
         // Labels
 
@@ -139,7 +144,6 @@ Theodoric.Game.prototype = {
             attack.reset(player.x + 16, player.y + 16);
             attack.lifespan = 500;
             attack.rotation = this.game.physics.arcade.moveToPointer(attack, attack.range);
-            console.log(attack.power)
             this.attackSound.play();
         }
     },
@@ -153,6 +157,7 @@ Theodoric.Game.prototype = {
                 target.health = 0;
             }
             this.playHurtSound(target.name);
+            console.log(attacker.name + " caused " + attacker.power + " damage to " + target.name + "!");
         }
     },
 
@@ -274,11 +279,13 @@ Theodoric.Game.prototype = {
             enemy.reset(this.game.world.randomX, this.game.world.randomY);
         } while (Phaser.Math.distance(this.player.x, this.player.y, enemy.x, enemy.y) <= 300)
 
-        if (rnd >= 0 && rnd < .3) this.generateSkeleton(enemy);
-        else if (rnd >= .3 && rnd < .4) this.generateSlime(enemy);
-        else if (rnd >= .4 && rnd < .6) this.generateBat(enemy);
-        else if (rnd >= .6 && rnd < .7) this.generateGhost(enemy);
-        else if (rnd >= .7 && rnd < 1) this.generateSpider(enemy);
+        if (rnd >= 0 && rnd < .3) enemy = this.generateSkeleton(enemy);
+        else if (rnd >= .3 && rnd < .4) enemy = this.generateSlime(enemy);
+        else if (rnd >= .4 && rnd < .6) enemy = this.generateBat(enemy);
+        else if (rnd >= .6 && rnd < .7) enemy = this.generateGhost(enemy);
+        else if (rnd >= .7 && rnd < 1) enemy = this.generateSpider(enemy);
+
+        console.log("Generated " + enemy.name + " with " + enemy.health + " health, " + enemy.power + " power, and " + enemy.speed + " speed.");
     },
 
     generateSkeleton: function (enemy) {
@@ -295,12 +302,13 @@ Theodoric.Game.prototype = {
         enemy.body.velocity.y = 0,
         enemy.body.collideWorldBounds = true;
         enemy.alive = true;
-        enemy.health = 100;
-        enemy.speed = 70;
-        enemy.power = 20;
+        enemy.health = 100 + this.modifier;
+        enemy.speed = 70 + this.modifier;
+        enemy.power = 20 + this.modifier;
         enemy.deadSprite = 6;
         enemy.invincibilityTime = 0;
         enemy.invincibilityFrames = 300;
+        enemy.reward = 2;
         enemy.name = "skeleton";
 
         return enemy;
@@ -320,12 +328,13 @@ Theodoric.Game.prototype = {
         enemy.body.velocity.y = 0,
         enemy.body.collideWorldBounds = true;
         enemy.alive = true;
-        enemy.health = 500;
-        enemy.speed = 30;
-        enemy.power = 40;
+        enemy.health = 500 + this.modifier;
+        enemy.speed = 30 + this.modifier;
+        enemy.power = 40 + this.modifier;
         enemy.deadSprite = 7;
         enemy.invincibilityTime = 0;
         enemy.invincibilityFrames = 300;
+        enemy.reward = 3;
         enemy.name = "slime";
 
         return enemy;
@@ -345,12 +354,13 @@ Theodoric.Game.prototype = {
         enemy.body.velocity.y = 0,
         enemy.body.collideWorldBounds = true;
         enemy.alive = true;
-        enemy.health = 25;
-        enemy.speed = 200;
-        enemy.power = 10;
+        enemy.health = 25 + this.modifier;
+        enemy.speed = 200 + this.modifier;
+        enemy.power = 10 + this.modifier;
         enemy.deadSprite = 8;
         enemy.invincibilityTime = 0;
         enemy.invincibilityFrames = 300;
+        enemy.reward = 1;
         enemy.name = "bat";
 
         return enemy;
@@ -370,12 +380,13 @@ Theodoric.Game.prototype = {
         enemy.body.velocity.y = 0,
         enemy.body.collideWorldBounds = true;
         enemy.alive = true;
-        enemy.health = 200;
-        enemy.speed = 60;
-        enemy.power = 30;
+        enemy.health = 200 + this.modifier;
+        enemy.speed = 60 + this.modifier;
+        enemy.power = 30 + this.modifier;
         enemy.deadSprite = 9;
         enemy.invincibilityTime = 0;
         enemy.invincibilityFrames = 300;
+        enemy.reward = 3;
         enemy.name = "ghost";
 
         return enemy;
@@ -395,12 +406,13 @@ Theodoric.Game.prototype = {
         enemy.body.velocity.y = 0,
         enemy.body.collideWorldBounds = true;
         enemy.alive = true;
-        enemy.health = 50;
-        enemy.speed = 120;
-        enemy.power = 12;
+        enemy.health = 50 + this.modifier;
+        enemy.speed = 120 + this.modifier;
+        enemy.power = 12 + this.modifier;
         enemy.deadSprite = 10;
         enemy.invincibilityTime = 0;
         enemy.invincibilityFrames = 300;
+        enemy.reward = 2;
         enemy.name = "spider";
 
         return enemy;
