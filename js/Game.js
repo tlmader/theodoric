@@ -42,7 +42,7 @@ Theodoric.Game.prototype = {
         this.gold = 0;
         this.xp = 0;
         this.xpToNext = 20;
-        this.goldForBoss = 1;
+        this.goldForBoss = 10000;
         this.bossSpawned = false;
 
         this.corpses = this.game.add.group();
@@ -306,8 +306,11 @@ Theodoric.Game.prototype = {
         corpse.lifespan = 3000;
 
         if (target !== this.player) {
-            target.destroy()
+            target.destroy();
             this.generateEnemy(this.enemies);
+        } else if (target.name === "Dragon") {
+            target.destroy();
+            this.bossSpawned = false;
         }
     },
 

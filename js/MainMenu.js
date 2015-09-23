@@ -31,8 +31,15 @@ Theodoric.MainMenu.prototype = {
         text = "High score: "+this.highestScore;
         style = { font: "15px Arial", fill: "#fff", align: "center" };
 
-        var h = this.game.add.text(this.game.width/2, this.game.height - 50, text, style);
-        h.anchor.set(0.5);
+        this.score = this.game.add.text(this.game.width/2, this.game.height - 50, text, style);
+        this.score.anchor.set(0.5);
+
+        // Instructions
+        text = "Move: WASD Keys   Attack: Left-Mouse Button";
+        style = { font: "15px Arial", fill: "#fff", align: "center" };
+
+        this.instructions = this.game.add.text(this.game.width/2, this.game.height - 25, text, style);
+        this.instructions.anchor.set(0.5);
 
 		this.playButton = this.add.button(this.game.width/2, this.game.height/2 + 100, 'playButton', this.startGame, this);
 		this.playButton.anchor.setTo(0.5);
@@ -49,5 +56,15 @@ Theodoric.MainMenu.prototype = {
 
 		// And start the actual game
 		this.state.start('Game');
-	}
+	},
+
+	shutdown: function() {
+	
+	    this.music = null;
+	    this.splash = null;
+        this.score = null;
+        this.instructions = null;
+        this.background = null;
+        this.playButton = null;
+    }
 };
