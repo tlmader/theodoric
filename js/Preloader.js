@@ -33,6 +33,8 @@ Theodoric.Preloader.prototype = {
 		this.load.spritesheet('dead', 'assets/images/dead.png', 16, 16);
 		this.load.spritesheet('potions', 'assets/images/potions.png', 16, 16);
 		this.load.spritesheet('attack', 'assets/images/attack.png', 32, 32);
+		this.load.spritesheet('dragons', 'assets/images/dragons.png', 32, 32);
+		this.load.spritesheet('fireball', 'assets/images/fireball.png', 16, 16);
 
 		this.load.audio('openingMusic', 'assets/sound/opening.ogg');
 		this.load.audio('overworldMusic', 'assets/sound/overworld.ogg');
@@ -44,7 +46,10 @@ Theodoric.Preloader.prototype = {
 		this.load.audio('ghostSound', 'assets/sound/ghost.wav');
 		this.load.audio('spiderSound', 'assets/sound/spider.wav');
 		this.load.audio('goldSound', 'assets/sound/gold.wav');
+		this.load.audio('potionSound', 'assets/sound/potion.ogg');
 		this.load.audio('levelSound', 'assets/sound/level.ogg');
+		this.load.audio('dragonSound', 'assets/sound/dragon.wav');
+		this.load.audio('roarSound', 'assets/sound/roar.wav');
 	},
 
 	create: function () {

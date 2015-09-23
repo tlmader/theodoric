@@ -2,11 +2,22 @@ Theodoric.MainMenu = function (game) {};
 
 Theodoric.MainMenu.prototype = {
 
+    init: function(score) {
+
+        var score = score || 0;
+        this.highestScore = this.highestScore || 0;
+        this.highestScore = Math.max(score, this.highestScore);
+    },
+
 	create: function () {
 
 		// We've already preloaded our assets, so let's kick right into the Main Menu itself.
 		// Here all we're doing is playing some music and adding a picture and button
 		// Naturally I expect you to do something significantly better :)
+
+		this.music = this.add.audio('openingMusic');
+		this.music.loop = true;
+		this.music.play();
 
 		this.background = this.game.add.tileSprite(0, 0, this.game.width, this.game.height, 'tiles', 92);
 
@@ -16,15 +27,19 @@ Theodoric.MainMenu.prototype = {
 		this.splash = this.add.image(this.game.width/2,this.game.height/2, 'logo');
 		this.splash.anchor.setTo(0.5);
 
-		this.music = this.add.audio('openingMusic');
-		this.music.loop = true;
-		this.music.play();
+        // High score
+        text = "High score: "+this.highestScore;
+        style = { font: "15px Arial", fill: "#fff", align: "center" };
+
+        var h = this.game.add.text(this.game.width/2, this.game.height - 50, text, style);
+        h.anchor.set(0.5);
 
 		this.playButton = this.add.button(this.game.width/2, this.game.height/2 + 100, 'playButton', this.startGame, this);
 		this.playButton.anchor.setTo(0.5);
 	},
 
 	update: function () {
+
 	},
 
 	startGame: function (pointer) {
