@@ -44,6 +44,7 @@ Theodoric.Preloader.prototype = {
 		this.load.audio('ghostSound', 'assets/sound/ghost.wav');
 		this.load.audio('spiderSound', 'assets/sound/spider.wav');
 		this.load.audio('goldSound', 'assets/sound/gold.wav');
+		this.load.audio('levelSound', 'assets/sound/level.ogg');
 	},
 
 	create: function () {
