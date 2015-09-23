@@ -37,7 +37,8 @@ Theodoric.Game.prototype = {
         this.game.world.setBounds(0, 0, 1920, 1920);
         this.background = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'tiles', 65);
 
-        // Initialize gold and xp
+        // Initialize data
+        this.notification = "";
         this.gold = 0;
         this.xp = 0;
         this.xpToNext = 20;
@@ -53,7 +54,7 @@ Theodoric.Game.prototype = {
         this.playerAttacks = this.generateAttacks(this.player.name, 500, 70);
 
         // Generate enemies - must be generated after player and player.level
-        this.enemies = this.generateEnemies();
+        this.enemies = this.generateEnemies(100);
 
         // Music
 		this.music = this.game.add.audio('overworldMusic');
@@ -125,13 +126,16 @@ Theodoric.Game.prototype = {
         }, this);
 
         this.enemies.forEachDead(function(enemy) {
-            if (this.rng(0, 3)) {
+            if (this.rng(0, 2)) {
                 this.generatePotion(this.collectables, enemy.x, enemy.y);
-                console.log("The " + enemy.name + " dropped a potion!");
+                this.notification = "The " + enemy.name + " dropped a potion!";
             }
             this.xp += enemy.xpGain;
             this.playDeath(enemy);
-            this.generateEnemy;
+            var amount = 1 + Math.floor(this.player.level / 5);
+            for (var i = 0; i < amount; i++) {
+                this.generateEnemy;
+            }
         }, this);
 
         // Collectables
@@ -142,6 +146,7 @@ Theodoric.Game.prototype = {
 
         // Labels
 
+        this.notificationLabel.text = this.notification;
         this.levelLabel.text = this.player.level;
         this.xpLabel.text = this.xp + " / " + this.xpToNext;
         this.goldLabel.text = this.gold;
@@ -150,19 +155,23 @@ Theodoric.Game.prototype = {
 
     showLabels: function() {
 
+        var text = "0";
+        style = { font: "10px Arial", fill: "#fff", align: "center" };
+        this.notificationLabel = this.game.add.text(25, 25, text, style);
+        this.notificationLabel.fixedToCamera = true;
+
         style = { font: "20px Arial", fill: "#ffd", align: "center" };
-        this.levelLabel = this.game.add.text(this.game.width - 475, this.game.height - 50, text, style);
+        this.levelLabel = this.game.add.text(50, this.game.height - 50, text, style);
         this.levelLabel.fixedToCamera = true;
 
         style = { font: "20px Arial", fill: "#ffd", align: "center" };
-        this.xpLabel = this.game.add.text(this.game.width - 425, this.game.height - 50, text, style);
+        this.xpLabel = this.game.add.text(100, this.game.height - 50, text, style);
         this.xpLabel.fixedToCamera = true;
 
         style = { font: "20px Arial", fill: "#f00", align: "center" };
-        this.healthLabel = this.game.add.text(this.game.width - 300, this.game.height - 50, text, style);
+        this.healthLabel = this.game.add.text(225, this.game.height - 50, text, style);
         this.healthLabel.fixedToCamera = true;
 
-        var text = "0";
         var style = { font: "20px Arial", fill: "#fff", align: "center" };
         this.goldLabel = this.game.add.text(this.game.width - 50, this.game.height - 50, text, style);
         this.goldLabel.fixedToCamera = true;
@@ -206,7 +215,7 @@ Theodoric.Game.prototype = {
                 target.health = 0;
             }
             this.playHurtSound(target.name);
-            console.log(attacker.name + " caused " + power + " damage to " + target.name + "!");
+            this.notification = attacker.name + " caused " + power + " damage to " + target.name + "!";
         }
     },
 
@@ -218,11 +227,11 @@ Theodoric.Game.prototype = {
                 collectable.animations.play('open');
                 this.gold++;
                 this.goldSound.play();
-                console.log("You pick up 1 gold.")
+                this.notification = "You pick up 1 gold.";
                 collectable.lifespan = 1000;
             } else if (collectable.name === "healthPotion") {
                 player.health += 20;
-                console.log("You consume a potion, healing you for 20 health.")
+                this.notification = "You consume a potion, healing you for 20 health.";
                 collectable.destroy();
             }
         }
@@ -232,7 +241,7 @@ Theodoric.Game.prototype = {
 
         var corpse = this.corpses.create(target.x, target.y, 'dead')
         corpse.scale.setTo(2);
-        corpse.animations.add('dead', [target.deadSprite], 10, true);
+        corpse.animations.add('dead', [target.corpseSprite], 10, true);
         corpse.animations.play('dead');
         corpse.lifespan = 3000;
 
@@ -300,7 +309,7 @@ Theodoric.Game.prototype = {
         player.health = 100;
         player.power = 25;
         player.speed = 120;
-        player.deadSprite = 1;
+        player.corpseSprite = 1;
         player.invincibilityTime = 0;
         player.invincibilityFrames = 500;
         player.name = "Theodoric";
@@ -327,7 +336,7 @@ Theodoric.Game.prototype = {
         return attacks;
     },
 
-    generateEnemies: function () {
+    generateEnemies: function (amount) {
 
         var enemies = this.game.add.group();
 
@@ -335,11 +344,7 @@ Theodoric.Game.prototype = {
         enemies.enableBody = true;
         enemies.physicsBodyType = Phaser.Physics.ARCADE;
 
-        var amount = 100;
-        var enemy;
-
         for (var i = 0; i < amount; i++) {
-
             this.generateEnemy(enemies);
         }
 
@@ -364,139 +369,76 @@ Theodoric.Game.prototype = {
         console.log("Generated " + enemy.name + " with " + enemy.health + " health, " + enemy.power + " power, and " + enemy.speed + " speed.");
     },
 
-    generateSkeleton: function (enemy) {
+    setEnemyStats: function (enemy, name, health, speed, power, corpseSprite) {
 
         enemy.scale.setTo(2);
+        enemy.animations.play('down');
+        enemy.body.velocity.x = 0,
+        enemy.body.velocity.y = 0,
+        enemy.body.collideWorldBounds = true;
+        enemy.invincibilityTime = 0;
+        enemy.invincibilityFrames = 300;
+
+        enemy.alive = true;
+        enemy.corpseSprite = corpseSprite;
+        enemy.name = name;
+        enemy.level = this.player.level;
+        enemy.health = health + (this.player.level * 2);
+        enemy.speed = speed + Math.floor(this.player.level * 1.5);;
+        enemy.power = power + Math.floor(this.player.level * 1.5);;
+        enemy.xpGain = 1 + Math.floor(this.player.level / 5);
+
+        return enemy;
+    },
+
+    generateSkeleton: function (enemy) {
 
         enemy.animations.add('down', [9, 10, 11], 10, true);
         enemy.animations.add('left', [21, 22, 23], 10, true);
         enemy.animations.add('right', [33, 34, 35], 10, true);
         enemy.animations.add('up', [45, 46, 47], 10, true);
-        enemy.animations.play('down');
 
-        enemy.body.velocity.x = 0,
-        enemy.body.velocity.y = 0,
-        enemy.body.collideWorldBounds = true;
-        enemy.alive = true;
-        enemy.level = this.player.level;
-        enemy.health = 100 + (this.player.level * 2);
-        enemy.speed = 70 + this.player.level;
-        enemy.power = 20 + this.player.level;
-        enemy.deadSprite = 6;
-        enemy.invincibilityTime = 0;
-        enemy.invincibilityFrames = 300;
-        enemy.xpGain = 2;
-        enemy.name = "Skeleton";
-
-        return enemy;
+        return this.setEnemyStats(enemy, "Skeleton", 100, 70, 20, 6);
     },
 
     generateSlime: function (enemy) {
-
-        enemy.scale.setTo(2);
 
         enemy.animations.add('down', [48, 49, 50], 10, true);
         enemy.animations.add('left', [60, 61, 62], 10, true);
         enemy.animations.add('right', [72, 73, 74], 10, true);
         enemy.animations.add('up', [84, 85, 86], 10, true);
-        enemy.animations.play('down');
 
-        enemy.body.velocity.x = 0,
-        enemy.body.velocity.y = 0,
-        enemy.body.collideWorldBounds = true;
-        enemy.alive = true;
-        enemy.level = this.player.level;
-        enemy.health = 350 + (this.player.level * 2);
-        enemy.speed = 40 + this.player.level;
-        enemy.power = 40 + this.player.level;
-        enemy.deadSprite = 7;
-        enemy.invincibilityTime = 0;
-        enemy.invincibilityFrames = 300;
-        enemy.xpGain = 3;
-        enemy.name = "Slime";
-
-        return enemy;
+        return this.setEnemyStats(enemy, "Slime", 300, 40, 50, 7);
     },
 
     generateBat: function (enemy) {
-
-        enemy.scale.setTo(2);
 
         enemy.animations.add('down', [51, 52, 53], 10, true);
         enemy.animations.add('left', [63, 64, 65], 10, true);
         enemy.animations.add('right', [75, 76, 77], 10, true);
         enemy.animations.add('up', [87, 88, 89], 10, true);
-        enemy.animations.play('down');
 
-        enemy.body.velocity.x = 0,
-        enemy.body.velocity.y = 0,
-        enemy.body.collideWorldBounds = true;
-        enemy.alive = true;
-        enemy.level = this.player.level;
-        enemy.health = 25 + (this.player.level * 2);
-        enemy.speed = 200 + this.player.level;
-        enemy.power = 10 + this.player.level;
-        enemy.deadSprite = 8;
-        enemy.invincibilityTime = 0;
-        enemy.invincibilityFrames = 300;
-        enemy.xpGain = 1;
-        enemy.name = "Bat";
-
-        return enemy;
+        return this.setEnemyStats(enemy, "Bat", 20, 200, 10, 8);
     },
 
     generateGhost: function (enemy) {
-
-        enemy.scale.setTo(2);
 
         enemy.animations.add('down', [54, 55, 56], 10, true);
         enemy.animations.add('left', [66, 67, 68], 10, true);
         enemy.animations.add('right', [78, 79, 80], 10, true);
         enemy.animations.add('up', [90, 91, 92], 10, true);
-        enemy.animations.play('down');
 
-        enemy.body.velocity.x = 0,
-        enemy.body.velocity.y = 0,
-        enemy.body.collideWorldBounds = true;
-        enemy.alive = true;
-        enemy.level = this.player.level;
-        enemy.health = 200 + (this.player.level * 2);
-        enemy.speed = 60 + this.player.level;
-        enemy.power = 30 + this.player.level;
-        enemy.deadSprite = 9;
-        enemy.invincibilityTime = 0;
-        enemy.invincibilityFrames = 300;
-        enemy.xpGain = 3;
-        enemy.name = "Ghost";
-
-        return enemy;
+        return this.setEnemyStats(enemy, "Ghost", 200, 60, 30, 9);
     },
 
     generateSpider: function (enemy) {
-
-        enemy.scale.setTo(2);
 
         enemy.animations.add('down', [57, 58, 59], 10, true);
         enemy.animations.add('left', [69, 70, 71], 10, true);
         enemy.animations.add('right', [81, 82, 83], 10, true);
         enemy.animations.add('up', [93, 94, 95], 10, true);
-        enemy.animations.play('down');
 
-        enemy.body.velocity.x = 0,
-        enemy.body.velocity.y = 0,
-        enemy.body.collideWorldBounds = true;
-        enemy.alive = true;
-        enemy.level = this.player.level;
-        enemy.health = 50 +(this.player.level * 2);
-        enemy.speed = 120 + this.player.level;
-        enemy.power = 12 + this.player.level;
-        enemy.deadSprite = 10;
-        enemy.invincibilityTime = 0;
-        enemy.invincibilityFrames = 300;
-        enemy.xpGain = 2;
-        enemy.name = "Spider";
-
-        return enemy;
+        return this.setEnemyStats(enemy, "Spider", 50, 120, 12, 10);
     },
 
     updatePlayerMovement: function () {
@@ -601,9 +543,27 @@ Theodoric.Game.prototype = {
 
     gameOver: function() {
 
+        this.background.destroy();
+        this.corpses.destroy();
+        this.collectables.destroy();
+        this.player.destroy();
+        this.playerAttacks.destroy();
+        this.enemies.destroy();
+
+		this.music.stop();
+		this.music.destroy();
+
+        this.attackSound.destroy();
+        this.playerSound.destroy();
+        this.skeletonSound.destroy();
+        this.slimeSound.destroy();
+        this.batSound.destroy();
+        this.ghostSound.destroy();
+        this.spiderSound.destroy();
+        this.goldSound.destroy();
+
         //  Here you should destroy anything you no longer need.
         //  Stop music, delete sprites, purge caches, free resources, all that good stuff.
-		this.music.stop();
 
         //  Then let's go back to the main menu.
         this.game.state.start('MainMenu', true, false);

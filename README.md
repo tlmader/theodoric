@@ -24,3 +24,6 @@ http://opengameart.org/content/tiny-16-basic
 
 avgvsta - Generic 8-bit JRPG Soundtrack
 http://opengameart.org/content/generic-8-bit-jrpg-soundtrack
+
+Bfxr. Make sound effects for your games.
+http://www.bfxr.net/
