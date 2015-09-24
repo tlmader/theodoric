@@ -34,15 +34,31 @@ Theodoric.Game.prototype = {
     create: function () {
 
         // Generate in order of back to front
-        this.game.world.setBounds(0, 0, 1920, 1920);
-        this.background = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'tiles', 65);
+        var worldSize = 1920;
+        this.game.world.setBounds(0, 0, worldSize, worldSize);
+
+        this.background = this.game.add.tileSprite(0, 0, this.game.world.width / 2, this.game.world.height / 2, 'tiles', 65);
+        this.background.scale.setTo(2);
+
+
+        this.grid = [];
+        this.gridOccupacy = [];
+        this.gridIndex = 0;
+        var gridSize = 32;
+        for (var x = 0; x < worldSize / gridSize - 1; x++) {
+            for (var y = 0; y < worldSize / gridSize - 1; y++) {
+                var gridX = x * gridSize;
+                var gridY = y * gridSize;
+                this.grid.push({x:gridX, y:gridY});
+            }
+        }
 
         // Initialize data
         this.notification = "";
         this.gold = 0;
         this.xp = 0;
         this.xpToNext = 20;
-        this.goldForBoss = 10000;
+        this.goldForBoss = 5000;
         this.bossSpawned = false;
 
         this.corpses = this.game.add.group();
@@ -497,7 +513,8 @@ Theodoric.Game.prototype = {
 
         var amount = 200
         for (var i = 0; i < amount; i++) {
-            this.generateChest(collectables, this.game.world.randomX, this.game.world.randomY)
+            var point = this.getRandomLocation();
+            this.generateChest(collectables, point.x, point.y);
         }
 
         return collectables;
@@ -710,7 +727,7 @@ Theodoric.Game.prototype = {
         this.game.state.start('MainMenu', true, false, this.xp + this.gold);
     },
 
-    rng: function(floor, ceiling) {
+    rng: function (floor, ceiling) {
         floor /= 10;
         ceiling /= 10;
         var rnd = Math.random();
@@ -718,5 +735,36 @@ Theodoric.Game.prototype = {
             return true;
         }
         return false;
-    }
+    },
+
+    getRandomLocation: function () {
+
+        this.shuffle(this.grid);
+        var x = this.grid[this.gridIndex].x;
+        var y = this.grid[this.gridIndex].y;
+        this.gridIndex++;
+        if (this.gridIndex === this.grid.length) {
+            this.gridIndex = 0;
+        }
+        return {x, y};
+    },
+
+    shuffle: function (array) {
+       var currentIndex = array.length, temporaryValue, randomIndex ;
+
+       // While there remain elements to shuffle...
+       while (0 !== currentIndex) {
+
+         // Pick a remaining element...
+         randomIndex = Math.floor(Math.random() * currentIndex);
+         currentIndex -= 1;
+
+         // And swap it with the current element.
+         temporaryValue = array[currentIndex];
+         array[currentIndex] = array[randomIndex];
+         array[randomIndex] = temporaryValue;
+       }
+
+       return array;
+     }
 };
