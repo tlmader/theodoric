@@ -40,18 +40,7 @@ Theodoric.Game.prototype = {
         this.background = this.game.add.tileSprite(0, 0, this.game.world.width / 2, this.game.world.height / 2, 'tiles', 65);
         this.background.scale.setTo(2);
 
-
-        this.grid = [];
-        this.gridOccupacy = [];
-        this.gridIndex = 0;
-        var gridSize = 32;
-        for (var x = 0; x < worldSize / gridSize - 1; x++) {
-            for (var y = 0; y < worldSize / gridSize - 1; y++) {
-                var gridX = x * gridSize;
-                var gridY = y * gridSize;
-                this.grid.push({x:gridX, y:gridY});
-            }
-        }
+        this.generateGrid(worldSize);
 
         // Initialize data
         this.notification = "";
@@ -261,7 +250,7 @@ Theodoric.Game.prototype = {
             if (target.health < 0) {
                 target.health = 0;
             }
-            this.playHurtSound(target.name);
+            this.playSound(target.name);
             this.notification = attacker.name + " caused " + strength + " damage to " + target.name + "!";
         }
     },
@@ -570,6 +559,47 @@ Theodoric.Game.prototype = {
         return collectable;
     },
 
+    playSound: function (name) {
+
+        if (name === this.player.name) {
+            this.playerSound.play();
+
+        } else if (name === "Skeleton") {
+            this.skeletonSound.play();
+
+        } else if (name === "Slime") {
+            this.slimeSound.play();
+
+        } else if (name === "Bat") {
+            this.batSound.play();
+
+        } else if (name === "Ghost") {
+            this.ghostSound.play();
+
+        } else if (name === "Spider") {
+            this.spiderSound.play();
+
+        } else if (name === "Dragon") {
+             this.roarSound.play();
+         }
+    },
+
+    generateSounds: function () {
+
+        this.attackSound = this.game.add.audio('attackSound');
+        this.batSound = this.game.add.audio('batSound');
+        this.dragonSound = this.game.add.audio('dragonSound');
+        this.roarSound = this.game.add.audio('roarSound');
+        this.ghostSound = this.game.add.audio('ghostSound');
+        this.goldSound = this.game.add.audio('goldSound');
+        this.levelSound = this.game.add.audio('levelSound');
+        this.playerSound = this.game.add.audio('playerSound');
+        this.potionSound = this.game.add.audio('potionSound');
+        this.skeletonSound = this.game.add.audio('skeletonSound');
+        this.slimeSound = this.game.add.audio('slimeSound');
+        this.spiderSound = this.game.add.audio('spiderSound');
+    },
+
     updatePlayerMovement: function () {
 
         // Up-Left
@@ -648,47 +678,6 @@ Theodoric.Game.prototype = {
         }
     },
 
-    playHurtSound: function (name) {
-
-        if (name === this.player.name) {
-            this.playerSound.play();
-
-        } else if (name === "Skeleton") {
-            this.skeletonSound.play();
-
-        } else if (name === "Slime") {
-            this.slimeSound.play();
-
-        } else if (name === "Bat") {
-            this.batSound.play();
-
-        } else if (name === "Ghost") {
-            this.ghostSound.play();
-
-        } else if (name === "Spider") {
-            this.spiderSound.play();
-
-        } else if (name === "Dragon") {
-             this.roarSound.play();
-         }
-    },
-
-    generateSounds: function () {
-
-        this.attackSound = this.game.add.audio('attackSound');
-        this.batSound = this.game.add.audio('batSound');
-        this.dragonSound = this.game.add.audio('dragonSound');
-        this.roarSound = this.game.add.audio('roarSound');
-        this.ghostSound = this.game.add.audio('ghostSound');
-        this.goldSound = this.game.add.audio('goldSound');
-        this.levelSound = this.game.add.audio('levelSound');
-        this.playerSound = this.game.add.audio('playerSound');
-        this.potionSound = this.game.add.audio('potionSound');
-        this.skeletonSound = this.game.add.audio('skeletonSound');
-        this.slimeSound = this.game.add.audio('slimeSound');
-        this.spiderSound = this.game.add.audio('spiderSound');
-    },
-
     gameOver: function() {
 
         this.background.destroy();
@@ -737,14 +726,31 @@ Theodoric.Game.prototype = {
         return false;
     },
 
+    generateGrid: function (worldSize) {
+
+        this.grid = [];
+        var gridSize = 32;
+        var grids = Math.floor(worldSize / gridSize);
+        for (var x = 0; x < grids; x++) {
+            for (var y = 0; y < grids; y++) {
+                var gridX = x * gridSize;
+                var gridY = y * gridSize;
+                this.grid.push({x:gridX, y:gridY});
+            }
+        }
+        this.shuffle(this.grid);
+    },
+
     getRandomLocation: function () {
 
-        this.shuffle(this.grid);
-        var x = this.grid[this.gridIndex].x;
-        var y = this.grid[this.gridIndex].y;
-        this.gridIndex++;
-        if (this.gridIndex === this.grid.length) {
-            this.gridIndex = 0;
+        var gridIndex = 0;
+        var x = this.grid[gridIndex].x;
+        var y = this.grid[gridIndex].y;
+        this.grid.splice(gridIndex, 1);
+        gridIndex++;
+        if (gridIndex === this.grid.length) {
+            this.shuffle(this.grid);
+            gridIndex = 0;
         }
         return {x, y};
     },
@@ -755,16 +761,16 @@ Theodoric.Game.prototype = {
        // While there remain elements to shuffle...
        while (0 !== currentIndex) {
 
-         // Pick a remaining element...
-         randomIndex = Math.floor(Math.random() * currentIndex);
-         currentIndex -= 1;
+            // Pick a remaining element...
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex -= 1;
 
-         // And swap it with the current element.
-         temporaryValue = array[currentIndex];
-         array[currentIndex] = array[randomIndex];
-         array[randomIndex] = temporaryValue;
+            // And swap it with the current element.
+            temporaryValue = array[currentIndex];
+            array[currentIndex] = array[randomIndex];
+            array[randomIndex] = temporaryValue;
        }
 
        return array;
-     }
+    }
 };
