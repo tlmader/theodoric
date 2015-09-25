@@ -52,6 +52,8 @@ Theodoric.Game.prototype = {
 
         this.corpses = this.game.add.group();
 
+        this.obstacles = this.generateObstacles();
+
         this.collectables = this.generateCollectables();
 
         // Generate player and set camera to follow
@@ -89,15 +91,6 @@ Theodoric.Game.prototype = {
     },
 
     update: function () {
-
-        // Collision
-
-        this.game.physics.arcade.collide(this.player, this.enemies, this.hit, null, this);
-        this.game.physics.arcade.collide(this.player, this.bosses, this.hit, null, this);
-        this.game.physics.arcade.collide(this.enemies, this.playerAttacks, this.hit, null, this);
-        this.game.physics.arcade.collide(this.bosses, this.playerAttacks, this.hit, null, this);
-        this.game.physics.arcade.overlap(this.player, this.bossAttacks, this.hit, null, this);
-        this.game.physics.arcade.overlap(this.player, this.collectables, this.collect, null, this);
 
         // Player
 
@@ -170,6 +163,8 @@ Theodoric.Game.prototype = {
 
         }, this);
 
+        this.collision();
+
         // Collectables
 
         this.collectables.forEachDead(function(collectable) {
@@ -205,6 +200,7 @@ Theodoric.Game.prototype = {
     },
     
     levelUp: function() {
+
         this.player.level++;
         this.player.vitality += 5;
         this.player.health += 5;
@@ -214,6 +210,22 @@ Theodoric.Game.prototype = {
         this.xpToNext = Math.floor(this.xpToNext * 1.1);
         this.notification = this.player.name + " has advanced to level " + this.player.level + "!";
         this.levelSound.play();
+    },
+
+    collision: function() {
+
+        this.game.physics.arcade.collide(this.player, this.enemies, this.hit, null, this);
+        this.game.physics.arcade.collide(this.player, this.bosses, this.hit, null, this);
+        this.game.physics.arcade.collide(this.player, this.bossAttacks, this.hit, null, this);
+
+        this.game.physics.arcade.collide(this.bosses, this.playerAttacks, this.hit, null, this);
+        this.game.physics.arcade.collide(this.enemies, this.playerAttacks, this.hit, null, this);
+
+        this.game.physics.arcade.collide(this.obstacles, this.player, null, null, this);
+        this.game.physics.arcade.collide(this.obstacles, this.playerAttacks, null, null, this);
+        this.game.physics.arcade.collide(this.obstacles, this.enemies, null, null, this);
+
+        this.game.physics.arcade.overlap(this.collectables, this.player, this.collect, null, this);
     },
 
     attack: function (attacker, attacks) {
@@ -262,39 +274,34 @@ Theodoric.Game.prototype = {
             var gain;
             if (collectable.name === "gold") {
                 gain = this.player.level + Math.floor(Math.random() * 10);
-                this.gold += gain;
+                this.gold += collectable.value;
                 this.goldSound.play();
-                this.notification = "You pick up " + gain + " gold.";
+                this.notification = "You pick up " + collectable.value + " gold.";
                 collectable.destroy();
             } else if (collectable.name === "chest") {
                 collectable.animations.play('open');
-                gain = Math.floor(Math.random() * 100);
-                this.gold += gain;
+                this.gold += collectable.value;
                 this.goldSound.play();
-                this.notification = "You open a chest and find " + gain + " gold!";
+                this.notification = "You open a chest and find " + collectable.value + " gold!";
                 collectable.lifespan = 1000;
             } else if (collectable.name === "healthPotion") {
-                gain = 20 + this.player.level + Math.floor(Math.random() * 10);
-                player.health += gain;
-                this.notification = "You consume a potion, healing you for " + gain + " health.";
+                player.health += collectable.value;
+                this.notification = "You consume a potion, healing you for " + collectable.value + " health.";
                 this.potionSound.play();
                 collectable.destroy();
             } else if (collectable.name === "vitalityPotion") {
-                gain = 4 + this.player.level;
-                player.vitality += gain;
-                this.notification = "You consume a potion, increasing your vitality by " + gain + "!";
+                player.vitality += collectable.value;
+                this.notification = "You consume a potion, increasing your vitality by " + collectable.value + "!";
                 this.potionSound.play();
                 collectable.destroy();
             } else if (collectable.name === "strengthPotion") {
-                gain = 1 + Math.floor(this.player.level / 5);
-                player.strength += gain;
-                this.notification = "You consume a potion, increasing your strength by " + gain + "!";
+                player.strength += collectable.value;
+                this.notification = "You consume a potion, increasing your strength by " + collectable.value + "!";
                 this.potionSound.play();
                 collectable.destroy();
             } else if (collectable.name === "speedPotion") {
-                gain = 1 + Math.floor(this.player.level / 5);
-                player.speed += gain;
-                this.notification = "You consume a potion, increasing your speed by  " + gain + "!";
+                player.speed += collectable.value;
+                this.notification = "You consume a potion, increasing your speed by  " + collectable.value + "!";
                 this.potionSound.play();
                 collectable.destroy();
             }
@@ -330,21 +337,25 @@ Theodoric.Game.prototype = {
         player.animations.add('right', [27, 28, 29], 10, true);
         player.animations.add('up', [39, 40, 41], 10, true);
         player.animations.play('down');
-
-        // Enable player physics
-        this.game.physics.arcade.enable(player);
-        player.body.collideWorldBounds = true;
         player.scale.setTo(2);
+
+        // Enable player physics;
+        this.game.physics.arcade.enable(player);
+        player.body.collideWorldBounds = true
         player.alive = true;
+
+        player.name = "Theodoric";
         player.level = 1;
-        player.vitality = 100;
+
         player.health = 100;
+        player.vitality = 100;
         player.strength = 25;
         player.speed = 125;
-        player.corpseSprite = 1;
-        player.invincibilityTime = 0;
+
         player.invincibilityFrames = 500;
-        player.name = "Theodoric";
+        player.invincibilityTime = 0;
+
+        player.corpseSprite = 1;
 
         return player;
     },
@@ -355,6 +366,7 @@ Theodoric.Game.prototype = {
         var attacks = this.game.add.group();
         attacks.enableBody = true;
         attacks.physicsBodyType = Phaser.Physics.ARCADE;
+
         if (name === "Theodoric") {
             attacks.createMultiple(1, 'attack');
         } else if (name === "Dragon") {
@@ -362,10 +374,12 @@ Theodoric.Game.prototype = {
             attacks.callAll('animations.add', 'animations', 'burn', [0, 1, 2, 3], 10, true);
             attacks.callAll('animations.play', 'animations', 'burn');
         }
+
         attacks.setAll('anchor.x', 0.5);
         attacks.setAll('anchor.y', 0.5);
         attacks.setAll('outOfBoundsKill', true);
         attacks.setAll('checkWorldBounds', true);
+
         attacks.rate = rate;
         attacks.range = range;
         attacks.next = 0;
@@ -375,22 +389,26 @@ Theodoric.Game.prototype = {
 
     setStats: function (entity, name, level, health, speed, strength, xpGain, corpseSprite) {
 
-        entity.scale.setTo(2);
         entity.animations.play('down');
+        entity.scale.setTo(2);
+
+        entity.body.collideWorldBounds = true;
         entity.body.velocity.x = 0,
         entity.body.velocity.y = 0,
-        entity.body.collideWorldBounds = true;
-        entity.invincibilityTime = 0;
-        entity.invincibilityFrames = 300;
-
         entity.alive = true;
-        entity.corpseSprite = corpseSprite;
+
         entity.name = name;
         entity.level = level;
-        entity.health = health + (this.player.level * 2);
-        entity.speed = speed + Math.floor(this.player.level * 1.5);;
-        entity.strength = strength + Math.floor(this.player.level * 1.5);;
         entity.xpGain = xpGain + Math.floor(this.player.level / 5);
+
+        entity.health = health + (this.player.level * 2);
+        entity.strength = strength + Math.floor(this.player.level * 1.5);
+        entity.speed = speed + Math.floor(this.player.level * 1.5);;
+
+        entity.invincibilityFrames = 300;
+        entity.invincibilityTime = 0;
+
+        entity.corpseSprite = corpseSprite;
 
         return entity;
     },
@@ -494,28 +512,45 @@ Theodoric.Game.prototype = {
         return this.setStats(boss, "Dragon", this.player.level, 2000, 100, 50, 500, 0);
     },
 
+    generateObstacles: function() {
+
+        var obstacles = this.game.add.group();
+        obstacles.enableBody = true;
+
+        var amount = 300;
+        for (var i = 0; i < amount; i++) {
+            var point = this.getRandomLocation();
+            this.generateObstacle(obstacles, point.x, point.y);
+        }
+
+        return obstacles
+    },
+
+    generateObstacle: function (obstacles, x, y) {
+
+        var obstacle = obstacles.create(x, y, 'tiles');
+        obstacle.animations.add('idle', [38], 0, true);
+        obstacle.animations.play('idle');
+        obstacle.scale.setTo(2);
+        obstacle.body.setSize(8, 8, 4, 4);
+        obstacle.body.moves = false;
+
+        return obstacle;
+    },
+
     generateCollectables: function () {
 
         var collectables = this.game.add.group();
         collectables.enableBody = true;
         collectables.physicsBodyType = Phaser.Physics.ARCADE;
 
-        var amount = 200
+        var amount = 100;
         for (var i = 0; i < amount; i++) {
             var point = this.getRandomLocation();
             this.generateChest(collectables, point.x, point.y);
         }
 
         return collectables;
-    },
-
-    generateGold: function (collectables, x, y) {
-
-        var collectable = collectables.create(x, y, 'tiles');
-        collectable.animations.add('idle', [68], 0, true);
-        collectable.animations.play('idle');
-        collectable.name = "gold";
-        return collectable;
     },
 
     generateChest: function (collectables, x, y) {
@@ -526,7 +561,17 @@ Theodoric.Game.prototype = {
         collectable.animations.add('open', [18, 30, 42], 10, false);
         collectable.animations.play('idle');
         collectable.name = "chest"
+        collectable.value = Math.floor(Math.random() * 150);
 
+        return collectable;
+    },
+
+    generateGold: function (collectables, x, y) {
+
+        var collectable = collectables.create(x, y, 'tiles');
+        collectable.animations.add('idle', [68], 0, true);
+        collectable.animations.play('idle');
+        collectable.name = "gold";
         return collectable;
     },
 
@@ -539,21 +584,25 @@ Theodoric.Game.prototype = {
             collectable.animations.add('idle', [0], 0, true);
             collectable.animations.play('idle');
             collectable.name = "healthPotion"
+            collectable.value = 20 + this.player.level + Math.floor(Math.random() * 10);
 
         } else if (rnd >= .7 && rnd < .8) {
             collectable.animations.add('idle', [2], 0, true);
             collectable.animations.play('idle');
             collectable.name = "vitalityPotion"
+            collectable.value = 4 + this.player.level;
 
         } else if (rnd >= .8 && rnd < .9) {
             collectable.animations.add('idle', [3], 0, true);
             collectable.animations.play('idle');
             collectable.name = "strengthPotion"
+            collectable.value = 1 + Math.floor(this.player.level / 5);
 
         } else if (rnd >= .9 && rnd < 1) {
             collectable.animations.add('idle', [4], 0, true);
             collectable.animations.play('idle');
             collectable.name = "speedPotion"
+            collectable.value = 1 + Math.floor(this.player.level / 5);
         }
 
         return collectable;
