@@ -135,7 +135,7 @@ Theodoric.Game.prototype = {
             this.spellLabel.text = "READY!";
 
                 if (this.controls.spell.isDown) {
-                    this.playerSpells.rate = 0;
+                    this.playerSpells.rate = 5000;
                     this.playerSpells.range = this.player.strength * 6;
                     this.attack(this.player, this.playerSpells);
                     this.spellCooldown = this.game.time.now + 15000;
