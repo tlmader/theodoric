@@ -629,15 +629,46 @@ Theodoric.Game.prototype = {
         var amount = 300;
         for (var i = 0; i < amount; i++) {
             var point = this.getRandomLocation();
-            this.generateObstacle(point);
+            var spriteIndex = Math.floor(Math.random() * 10);
+            this.generateObstacle(point, spriteIndex);
         }
     },
 
-    generateObstacle: function (location) {
+    generateObstacle: function (location, spriteIndex) {
 
         obstacle = this.obstacles.create(location.x, location.y, 'tiles');
-        obstacle.animations.add('idle', [38], 0, true);
-        obstacle.animations.play('idle');
+
+        if (spriteIndex === 0) {
+            obstacle.animations.add('tree', [38], 0, true);
+            obstacle.animations.play('tree');
+        } else if (spriteIndex === 1) {
+            obstacle.animations.add('tree', [38], 0, true);
+            obstacle.animations.play('tree');
+        } else if (spriteIndex === 2) {
+            obstacle.animations.add('shrub', [20], 0, true);
+            obstacle.animations.play('shrub');
+        } else if (spriteIndex === 3) {
+            obstacle.animations.add('pine', [30], 0, true);
+            obstacle.animations.play('pine');
+        } else if (spriteIndex === 4) {
+            obstacle.animations.add('tree', [38], 0, true);
+            obstacle.animations.play('tree');
+        } else if (spriteIndex === 5) {
+            obstacle.animations.add('column', [39], 0, true);
+            obstacle.animations.play('column');
+        } else if (spriteIndex === 6) {
+            obstacle.animations.add('tree', [38], 0, true);
+            obstacle.animations.play('tree');
+        } else if (spriteIndex === 7) {
+            obstacle.animations.add('tree', [38], 0, true);
+            obstacle.animations.play('tree');
+        } else if (spriteIndex === 8) {
+            obstacle.animations.add('tree', [38], 0, true);
+            obstacle.animations.play('tree');
+        } else if (spriteIndex === 9) {
+            obstacle.animations.add('tree', [38], 0, true);
+            obstacle.animations.play('tree');
+        }
         obstacle.scale.setTo(2);
         obstacle.body.setSize(8, 8, 4, -2);
         obstacle.body.moves = false;
