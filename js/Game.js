@@ -48,7 +48,7 @@ Theodoric.Game.prototype = {
         this.gold = 0;
         this.xp = 0;
         this.xpToNext = 20;
-        this.goldForBoss = 1;
+        this.goldForBoss = 5000;
         this.bossSpawned = false;
         this.bossColorIndex = 0;
 
@@ -611,7 +611,7 @@ Theodoric.Game.prototype = {
 
         console.log('Generated dragon!');
 
-        return this.setStats(boss, 'Dragon', 1, 100, 50, 500, 0);
+        return this.setStats(boss, 'Dragon', 2000, 100, 50, 500, 0);
     },
 
     generateObstacles: function() {
