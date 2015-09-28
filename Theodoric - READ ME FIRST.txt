@@ -1,0 +1,7 @@
+This nw.js package has an issue playing the game's audio.
+
+Play here for better sound: Tlmader.github.io
+
+Thank you for playing!
+
+-Ted
