@@ -177,10 +177,7 @@ Theodoric.Game.prototype = {
                 this.notification = 'The ' + enemy.name + ' dropped a potion!';
             }
             this.xp += enemy.reward;
-            var amount = 1 + Math.floor(this.player.level / 5);
-            for (var i = 0; i < amount; i++) {
-                this.generateEnemy(this.enemies);
-            }
+            this.generateEnemy(this.enemies);
             this.deathHandler(enemy);
         }, this);
     },
