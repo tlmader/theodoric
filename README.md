@@ -73,3 +73,11 @@ http://cooltext.com/
 
 Bfxr. Make sound effects for your games.
 http://www.bfxr.net/
+
+Testers:
+
+Astrid Manuel
+
+Jessica Talbert
+
+Alex Forsyth
