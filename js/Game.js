@@ -187,7 +187,7 @@ Theodoric.Game.prototype = {
         // Spawn boss if player obtains enough gold
         if (this.gold > this.goldForBoss && !this.bossSpawned) {
             this.bossSpawned = true;
-            this.goldForBoss * 2;
+            this.goldForBoss += 5000;
             var boss = this.generateDragon(this.bossColorIndex);
             this.dragonSound.play();
             this.notification = 'A ' + boss.name + ' appeared!';
