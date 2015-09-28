@@ -25,16 +25,20 @@ Theodoric.Preloader.prototype = {
 		this.load.setPreloadSprite(this.preloadBar);
 
 		//	Here we load the rest of the assets our game needs.
-		this.load.image('playButton', 'assets/images/play.png', 16, 16);
+		this.load.image('playButton', 'assets/images/play.png');
+		this.load.image('flame', 'assets/images/flame.png');
+		this.load.image('sword', 'assets/images/sword.png');
+		this.load.image('levelParticle', 'assets/images/level-particle.png');
+		this.load.image('spellParticle', 'assets/images/spell-particle.png');
 
 		this.load.spritesheet('tiles', 'assets/images/tiles.png', 16, 16);
 		this.load.spritesheet('things', 'assets/images/things.png', 16, 16);
 		this.load.spritesheet('characters', 'assets/images/characters.png', 16, 16);
 		this.load.spritesheet('dead', 'assets/images/dead.png', 16, 16);
 		this.load.spritesheet('potions', 'assets/images/potions.png', 16, 16);
-		this.load.spritesheet('attack', 'assets/images/attack.png', 32, 32);
 		this.load.spritesheet('dragons', 'assets/images/dragons.png', 32, 32);
 		this.load.spritesheet('fireball', 'assets/images/fireball.png', 16, 16);
+		this.load.spritesheet('spell', 'assets/images/spell.png', 12, 12);
 
 		this.load.audio('openingMusic', 'assets/sound/opening.ogg');
 		this.load.audio('overworldMusic', 'assets/sound/overworld.ogg');
@@ -48,8 +52,8 @@ Theodoric.Preloader.prototype = {
 		this.load.audio('goldSound', 'assets/sound/gold.wav');
 		this.load.audio('potionSound', 'assets/sound/potion.ogg');
 		this.load.audio('levelSound', 'assets/sound/level.ogg');
+		this.load.audio('fireballSound', 'assets/sound/fireball.wav');
 		this.load.audio('dragonSound', 'assets/sound/dragon.wav');
-		this.load.audio('roarSound', 'assets/sound/roar.wav');
 	},
 
 	create: function () {

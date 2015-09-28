@@ -35,7 +35,7 @@ Theodoric.MainMenu.prototype = {
         this.score.anchor.set(0.5);
 
         // Instructions
-        text = "Move: WASD Keys   Attack: Left-Mouse Button";
+        text = "Move: WASD Keys   Attack: Hold Left-Mouse Button";
         style = { font: "15px Arial", fill: "#fff", align: "center" };
 
         this.instructions = this.game.add.text(this.game.width/2, this.game.height - 25, text, style);
@@ -59,7 +59,7 @@ Theodoric.MainMenu.prototype = {
 	},
 
 	shutdown: function() {
-	
+
 	    this.music = null;
 	    this.splash = null;
         this.score = null;

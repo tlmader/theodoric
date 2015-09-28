@@ -26,7 +26,7 @@ Theodoric.Game = function (game) {
     this.rnd;       //  the repeatable random number generator (Phaser.RandomDataGenerator)
 
     //  You can use any of these from any function within this State.
-    //  But do consider them as being 'reserved words', i.e. don't create a property for your own game called "world" or you'll over-write the world reference.
+    //  But do consider them as being 'reserved words', i.e. don't create a property for your own game called 'world' or you'll over-write the world reference.
 };
 
 Theodoric.Game.prototype = {
@@ -43,12 +43,14 @@ Theodoric.Game.prototype = {
         this.generateGrid(worldSize);
 
         // Initialize data
-        this.notification = "";
+        this.notification = '';
+        this.spellCooldown = 0;
         this.gold = 0;
         this.xp = 0;
         this.xpToNext = 20;
-        this.goldForBoss = 5000;
+        this.goldForBoss = 1;
         this.bossSpawned = false;
+        this.bossColorIndex = 0;
 
         this.corpses = this.game.add.group();
 
@@ -60,8 +62,10 @@ Theodoric.Game.prototype = {
         this.player = this.generatePlayer();
         this.game.camera.follow(this.player);
 
-        this.playerAttacks = this.generateAttacks("Theodoric");
-        this.bossAttacks = this.generateAttacks("Dragon", 2000, 300);
+        this.playerAttacks = this.generateAttacks('sword', 1);
+        this.playerSpells = this.generateAttacks('spell', 1);
+        this.bossAttacks = this.generateAttacks('spellParticle', 5,2000, 300);
+        this.bossAttacks = this.generateAttacks('fireball', 1, 2000, 300);
 
         // Generate enemies - must be generated after player and player.level
         this.enemies = this.generateEnemies(100);
@@ -79,11 +83,12 @@ Theodoric.Game.prototype = {
         this.generateSounds();
 
         // Set the controls
-        this.wasd = {
+        this.controls = {
             up: this.game.input.keyboard.addKey(Phaser.Keyboard.W),
             left: this.game.input.keyboard.addKey(Phaser.Keyboard.A),
             down: this.game.input.keyboard.addKey(Phaser.Keyboard.S),
             right: this.game.input.keyboard.addKey(Phaser.Keyboard.D),
+            spell: this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
         };
 
         // Set the camera
@@ -95,26 +100,40 @@ Theodoric.Game.prototype = {
         // Player
 
         if (this.player.alive) {
-            this.updatePlayerMovement();
+            this.playerMovementHandler();
 
             // Attack towards mouse click
             if (this.game.input.activePointer.isDown) {
-                this.playerAttacks.rate = this.player.speed * 4;
+                this.playerAttacks.rate = 1000 - (this.player.speed * 4);
                 this.playerAttacks.range = this.player.strength * 3;
                 this.attack(this.player, this.playerAttacks);
+            }
+
+            // Use spell when spacebar is pressed
+            if (this.game.time.now > this.spellCooldown) {
+            this.spellLabel.text = "READY!";
+
+                if (this.controls.spell.isDown) {
+                    this.playerSpells.rate = 1500 - (this.player.speed * 4);
+                    this.playerSpells.range = this.player.strength * 6;
+                    this.attack(this.player, this.playerSpells);
+                    this.spellCooldown = this.game.time.now + 15000;
+                }
+            } else {
+                this.spellLabel.text = "RECHARGING...";
             }
 
             if (this.player.health > this.player.vitality) {
                 this.player.health = this.player.vitality;
             }
-            
+
             if (this.xp >= this.xpToNext) {
                 this.levelUp();
             }
         }
 
         if (!this.player.alive) {
-            this.playDeath(this.player);
+            this.deathHandler(this.player);
             this.game.time.events.add(1000, this.gameOver, this);
         }
 
@@ -123,24 +142,24 @@ Theodoric.Game.prototype = {
         this.enemies.forEachAlive(function(enemy) {
             if (enemy.visible && enemy.inCamera) {
                 this.game.physics.arcade.moveToObject(enemy, this.player, enemy.speed)
-                this.updateEnemyMovement(enemy);
+                this.enemyMovementHandler(enemy);
             }
 
         }, this);
 
         this.enemies.forEachDead(function(enemy) {
             if (this.rng(0, 5)) {
-                this.generateGold(this.collectables, enemy.x, enemy.y);
+                this.generateGold(this.collectables, enemy);
             } else if (this.rng(0, 2)) {
-                this.generatePotion(this.collectables, enemy.x, enemy.y);
-                this.notification = "The " + enemy.name + " dropped a potion!";
+                this.generatePotion(this.collectables, enemy);
+                this.notification = 'The ' + enemy.name + ' dropped a potion!';
             }
-            this.xp += enemy.xpGain;
-            this.playDeath(enemy);
+            this.xp += enemy.reward;
             var amount = 1 + Math.floor(this.player.level / 5);
             for (var i = 0; i < amount; i++) {
-                this.generateEnemy;
+                this.generateEnemy(this.enemies);
             }
+            this.deathHandler(enemy);
         }, this);
 
         // Boss
@@ -149,21 +168,45 @@ Theodoric.Game.prototype = {
         if (this.gold > this.goldForBoss && !this.bossSpawned) {
             this.bossSpawned = true;
             this.goldForBoss * 2;
-            var boss = this.generateDragon();
-            this.roarSound.play();
-            this.notification = "A " + boss.name + " appeared!";
+            var boss = this.generateDragon(this.bossColorIndex);
+            this.dragonSound.play();
+            this.notification = 'A ' + boss.name + ' appeared!';
         }
 
         this.bosses.forEachAlive(function(boss) {
             if (boss.visible && boss.inCamera) {
                 this.game.physics.arcade.moveToObject(boss, this.player, boss.speed)
-                this.updateEnemyMovement(boss);
+                this.enemyMovementHandler(boss);
                 this.attack(boss, this.bossAttacks);
             }
+        }, this);
+
+        this.bosses.forEachDead(function(boss) {;
+            this.bossSpawned = false;
+            if (this.bossColorIndex === 7) {
+                 this.bossColorIndex = 0;
+            } else {
+                this.bossColorIndex++;
+            }
+
+            this.generateGold(this.collectables, boss);
+            this.generatePotion(this.collectables, boss);
+            this.notification = 'The ' + boss.name + ' dropped a potion!';
+            this.xp += boss.reward;
+
+            // Make the dragon explode
+            var emitter = this.game.add.emitter(boss.x, boss.y, 100);
+            emitter.makeParticles('flame');
+            emitter.minParticleSpeed.setTo(-200, -200);
+            emitter.maxParticleSpeed.setTo(200, 200);
+            emitter.gravity = 0;
+            emitter.start(true, 1000, null, 100);
+
+            boss.destroy();
 
         }, this);
 
-        this.collision();
+        this.collisionHandler();
 
         // Collectables
 
@@ -174,31 +217,35 @@ Theodoric.Game.prototype = {
         // Labels
 
         this.notificationLabel.text = this.notification;
-        this.xpLabel.text = "Lvl. " + this.player.level + " - " + this.xp + " XP / " + this.xpToNext + " XP";
-        this.goldLabel.text = this.gold + " Gold";
-        this.healthLabel.text = this.player.health + " / " + this.player.vitality;
+        this.xpLabel.text = 'Lvl. ' + this.player.level + ' - ' + this.xp + ' XP / ' + this.xpToNext + ' XP';
+        this.goldLabel.text = this.gold + ' Gold';
+        this.healthLabel.text = this.player.health + ' / ' + this.player.vitality;
     },
 
     showLabels: function() {
 
-        var text = "0";
-        style = { font: "10px Arial", fill: "#fff", align: "center" };
+        var text = '0';
+        style = { font: '10px Arial', fill: '#fff', align: 'center' };
         this.notificationLabel = this.game.add.text(25, 25, text, style);
         this.notificationLabel.fixedToCamera = true;
 
-        style = { font: "10px Arial", fill: "#ffd", align: "center" };
+        style = { font: '10px Arial', fill: '#ffd', align: 'center' };
         this.xpLabel = this.game.add.text(25, this.game.height - 25, text, style);
         this.xpLabel.fixedToCamera = true;
 
-        style = { font: "20px Arial", fill: "#f00", align: "center" };
+        style = { font: '20px Arial', fill: '#f00', align: 'center' };
         this.healthLabel = this.game.add.text(225, this.game.height - 50, text, style);
         this.healthLabel.fixedToCamera = true;
 
-        var style = { font: "10px Arial", fill: "#fff", align: "center" };
+        var style = { font: '10px Arial', fill: '#fff', align: 'center' };
         this.goldLabel = this.game.add.text(this.game.width - 75, this.game.height - 25, text, style);
         this.goldLabel.fixedToCamera = true;
+
+        var style = { font: '10px Arial', fill: '#fff', align: 'center' };
+        this.spellLabel = this.game.add.text(230, this.game.height - 25, text, style);
+        this.spellLabel.fixedToCamera = true;
     },
-    
+
     levelUp: function() {
 
         this.player.level++;
@@ -208,11 +255,17 @@ Theodoric.Game.prototype = {
         this.player.speed += 1;
         this.xp -= this.xpToNext;
         this.xpToNext = Math.floor(this.xpToNext * 1.1);
-        this.notification = this.player.name + " has advanced to level " + this.player.level + "!";
+        this.notification = this.player.name + ' has advanced to level ' + this.player.level + '!';
         this.levelSound.play();
+        var emitter = this.game.add.emitter(this.player.x, this.player.y, 100);
+        emitter.makeParticles('levelParticle');
+        emitter.minParticleSpeed.setTo(-200, -200);
+        emitter.maxParticleSpeed.setTo(200, 200);
+        emitter.gravity = 0;
+        emitter.start(true, 1000, null, 100);
     },
 
-    collision: function() {
+    collisionHandler: function() {
 
         this.game.physics.arcade.collide(this.player, this.enemies, this.hit, null, this);
         this.game.physics.arcade.collide(this.player, this.bosses, this.hit, null, this);
@@ -220,6 +273,13 @@ Theodoric.Game.prototype = {
 
         this.game.physics.arcade.collide(this.bosses, this.playerAttacks, this.hit, null, this);
         this.game.physics.arcade.collide(this.enemies, this.playerAttacks, this.hit, null, this);
+        this.game.physics.arcade.overlap(this.bosses, this.playerAttacks, this.hit, null, this);
+        this.game.physics.arcade.overlap(this.enemies, this.playerAttacks, this.hit, null, this);
+
+        this.game.physics.arcade.collide(this.bosses, this.playerSpells, this.hit, null, this);
+        this.game.physics.arcade.collide(this.enemies, this.playerSpells, this.hit, null, this);
+        this.game.physics.arcade.overlap(this.bosses, this.playerSpells, this.hit, null, this);
+        this.game.physics.arcade.overlap(this.enemies, this.playerSpells, this.hit, null, this);
 
         this.game.physics.arcade.collide(this.obstacles, this.player, null, null, this);
         this.game.physics.arcade.collide(this.obstacles, this.playerAttacks, null, null, this);
@@ -238,33 +298,83 @@ Theodoric.Game.prototype = {
             a.strength = attacker.strength;
             a.reset(attacker.x + 16, attacker.y + 16);
             a.lifespan = attacks.rate;
-            if (attacker.name === "Theodoric") {
+            console.log(attacks.name);
+            if (attacks.name === 'sword') {
                 a.rotation = this.game.physics.arcade.moveToPointer(a, attacks.range);
                 this.attackSound.play();
-            } else if (attacker.name === "Dragon") {
+            } else if (attacks.name === 'spell') {
+                a.rotation = this.game.physics.arcade.moveToPointer(a, attacks.range);
+                a.effect = 'spell';
+                a.strength *= 2;
+                this.fireballSound.play();
+            } else if (attacks.name === 'fireball') {
                 a.rotation = this.game.physics.arcade.moveToObject(a, this.player, attacks.range);
-                this.dragonSound.play();
+                this.fireballSound.play();
             }
         }
+    },
+
+    generateAttacks: function (name, amount, rate, range) {
+
+        // Generate the group of attack objects
+        var attacks = this.game.add.group();
+        attacks.enableBody = true;
+        attacks.physicsBodyType = Phaser.Physics.ARCADE;
+        attacks.createMultiple(amount, name);
+
+        if (name === 'spell') {
+            attacks.callAll('animations.add', 'animations', 'particle', [0, 1, 2, 3,4 ,5], 10, true);
+            attacks.callAll('animations.play', 'animations', 'particle');
+        } else if (name === 'fireball') {
+            attacks.callAll('animations.add', 'animations', 'particle', [0, 1, 2, 3], 10, true);
+            attacks.callAll('animations.play', 'animations', 'particle');
+        }
+
+        attacks.setAll('anchor.x', 0.5);
+        attacks.setAll('anchor.y', 0.5);
+        attacks.setAll('outOfBoundsKill', true);
+        attacks.setAll('checkWorldBounds', true);
+
+        attacks.rate = rate;
+        attacks.range = range;
+        attacks.next = 0;
+        attacks.name = name;
+
+        return attacks;
     },
 
     hit: function (target, attacker) {
 
         if (this.game.time.now > target.invincibilityTime) {
             target.invincibilityTime = this.game.time.now + target.invincibilityFrames;
-            var strength = 0;
-            if (attacker.name == "Theodoric") {
-                strength = this.player.strength;
-            } else {
-                strength = attacker.strength;
-            }
-            target.damage(strength)
+            target.damage(attacker.strength)
             if (target.health < 0) {
                 target.health = 0;
             }
             this.playSound(target.name);
-            this.notification = attacker.name + " caused " + strength + " damage to " + target.name + "!";
+            this.notification = attacker.name + ' caused ' + attacker.strength + ' damage to ' + target.name + '!';
+
+            if (attacker.effect === 'spell') {
+                var emitter = this.game.add.emitter(attacker.x, attacker.y, 100);
+                emitter.makeParticles('spellParticle');
+                emitter.minParticleSpeed.setTo(-200, -200);
+                emitter.maxParticleSpeed.setTo(200, 200);
+                emitter.gravity = 0;
+                emitter.start(true, 1000, null, 100);
+
+                attacker.kill();
+            }
         }
+    },
+
+    deathHandler: function (target) {
+
+        var corpse = this.corpses.create(target.x, target.y, 'dead')
+        corpse.scale.setTo(2);
+        corpse.animations.add('idle', [target.corpseSprite], 0, true);
+        corpse.animations.play('idle');
+        corpse.lifespan = 3000;
+        target.destroy();
     },
 
     collect: function(player, collectable) {
@@ -272,57 +382,40 @@ Theodoric.Game.prototype = {
         if (!collectable.collected) {
             collectable.collected = true;
             var gain;
-            if (collectable.name === "gold") {
+            if (collectable.name === 'gold') {
                 gain = this.player.level + Math.floor(Math.random() * 10);
                 this.gold += collectable.value;
                 this.goldSound.play();
-                this.notification = "You pick up " + collectable.value + " gold.";
+                this.notification = 'You pick up ' + collectable.value + ' gold.';
                 collectable.destroy();
-            } else if (collectable.name === "chest") {
+            } else if (collectable.name === 'chest') {
                 collectable.animations.play('open');
                 this.gold += collectable.value;
                 this.goldSound.play();
-                this.notification = "You open a chest and find " + collectable.value + " gold!";
+                this.notification = 'You open a chest and find ' + collectable.value + ' gold!';
                 collectable.lifespan = 1000;
-            } else if (collectable.name === "healthPotion") {
+            } else if (collectable.name === 'healthPotion') {
                 player.health += collectable.value;
-                this.notification = "You consume a potion, healing you for " + collectable.value + " health.";
+                this.notification = 'You consume a potion, healing you for ' + collectable.value + ' health.';
                 this.potionSound.play();
                 collectable.destroy();
-            } else if (collectable.name === "vitalityPotion") {
+            } else if (collectable.name === 'vitalityPotion') {
                 player.vitality += collectable.value;
-                this.notification = "You consume a potion, increasing your vitality by " + collectable.value + "!";
+                this.notification = 'You consume a potion, increasing your vitality by ' + collectable.value + '!';
                 this.potionSound.play();
                 collectable.destroy();
-            } else if (collectable.name === "strengthPotion") {
+            } else if (collectable.name === 'strengthPotion') {
                 player.strength += collectable.value;
-                this.notification = "You consume a potion, increasing your strength by " + collectable.value + "!";
+                this.notification = 'You consume a potion, increasing your strength by ' + collectable.value + '!';
                 this.potionSound.play();
                 collectable.destroy();
-            } else if (collectable.name === "speedPotion") {
+            } else if (collectable.name === 'speedPotion') {
                 player.speed += collectable.value;
-                this.notification = "You consume a potion, increasing your speed by  " + collectable.value + "!";
+                this.notification = 'You consume a potion, increasing your speed by  ' + collectable.value + '!';
                 this.potionSound.play();
                 collectable.destroy();
             }
 
-        }
-    },
-
-    playDeath: function (target) {
-
-        var corpse = this.corpses.create(target.x, target.y, 'dead')
-        corpse.scale.setTo(2);
-        corpse.animations.add('idle', [target.corpseSprite], 0, true);
-        corpse.animations.play('idle');
-        corpse.lifespan = 3000;
-
-        if (target !== this.player) {
-            target.destroy();
-            this.generateEnemy(this.enemies);
-        } else if (target.name === "Dragon") {
-            target.destroy();
-            this.bossSpawned = false;
         }
     },
 
@@ -344,7 +437,7 @@ Theodoric.Game.prototype = {
         player.body.collideWorldBounds = true
         player.alive = true;
 
-        player.name = "Theodoric";
+        player.name = 'Theodoric';
         player.level = 1;
 
         player.health = 100;
@@ -360,34 +453,7 @@ Theodoric.Game.prototype = {
         return player;
     },
 
-    generateAttacks: function (name, rate, range) {
-
-        // Generate the group of attack objects
-        var attacks = this.game.add.group();
-        attacks.enableBody = true;
-        attacks.physicsBodyType = Phaser.Physics.ARCADE;
-
-        if (name === "Theodoric") {
-            attacks.createMultiple(1, 'attack');
-        } else if (name === "Dragon") {
-            attacks.createMultiple(5, 'fireball');
-            attacks.callAll('animations.add', 'animations', 'burn', [0, 1, 2, 3], 10, true);
-            attacks.callAll('animations.play', 'animations', 'burn');
-        }
-
-        attacks.setAll('anchor.x', 0.5);
-        attacks.setAll('anchor.y', 0.5);
-        attacks.setAll('outOfBoundsKill', true);
-        attacks.setAll('checkWorldBounds', true);
-
-        attacks.rate = rate;
-        attacks.range = range;
-        attacks.next = 0;
-
-        return attacks;
-    },
-
-    setStats: function (entity, name, level, health, speed, strength, xpGain, corpseSprite) {
+    setStats: function (entity, name, health, speed, strength, reward, corpseSprite) {
 
         entity.animations.play('down');
         entity.scale.setTo(2);
@@ -398,12 +464,11 @@ Theodoric.Game.prototype = {
         entity.alive = true;
 
         entity.name = name;
-        entity.level = level;
-        entity.xpGain = xpGain + Math.floor(this.player.level / 5);
-
-        entity.health = health + (this.player.level * 2);
-        entity.strength = strength + Math.floor(this.player.level * 1.5);
-        entity.speed = speed + Math.floor(this.player.level * 1.5);;
+        entity.level = this.player.level;
+        entity.health = health + (entity.level * 2);
+        entity.speed = speed + Math.floor(entity.level * 1.5);;
+        entity.strength = strength + Math.floor(entity.level * 1.5);;
+        entity.reward = reward + Math.floor(entity.level * 1.5);
 
         entity.invincibilityFrames = 300;
         entity.invincibilityTime = 0;
@@ -443,7 +508,7 @@ Theodoric.Game.prototype = {
         else if (rnd >= .6 && rnd < .7) enemy = this.generateGhost(enemy);
         else if (rnd >= .7 && rnd < 1) enemy = this.generateSpider(enemy);
 
-        console.log("Generated " + enemy.name + " with " + enemy.health + " health, " + enemy.strength + " strength, and " + enemy.speed + " speed.");
+        console.log('Generated ' + enemy.name + ' with ' + enemy.health + ' health, ' + enemy.strength + ' strength, and ' + enemy.speed + ' speed.');
 
         return enemy;
     },
@@ -455,7 +520,7 @@ Theodoric.Game.prototype = {
         enemy.animations.add('right', [33, 34, 35], 10, true);
         enemy.animations.add('up', [45, 46, 47], 10, true);
 
-        return this.setStats(enemy, "Skeleton", this.player.level, 100, 70, 20, 5, 6);
+        return this.setStats(enemy, 'Skeleton', 100, 70, 20, 5, 6);
     },
 
     generateSlime: function (enemy) {
@@ -465,7 +530,7 @@ Theodoric.Game.prototype = {
         enemy.animations.add('right', [72, 73, 74], 10, true);
         enemy.animations.add('up', [84, 85, 86], 10, true);
 
-        return this.setStats(enemy, "Slime", this.player.level, 300, 40, 50, 10, 7);
+        return this.setStats(enemy, 'Slime', 300, 40, 50, 10, 7);
     },
 
     generateBat: function (enemy) {
@@ -475,7 +540,7 @@ Theodoric.Game.prototype = {
         enemy.animations.add('right', [75, 76, 77], 10, true);
         enemy.animations.add('up', [87, 88, 89], 10, true);
 
-        return this.setStats(enemy, "Bat", this.player.level, 20, 200, 10, 2, 8);
+        return this.setStats(enemy, 'Bat', 20, 200, 10, 2, 8);
     },
 
     generateGhost: function (enemy) {
@@ -485,7 +550,7 @@ Theodoric.Game.prototype = {
         enemy.animations.add('right', [78, 79, 80], 10, true);
         enemy.animations.add('up', [90, 91, 92], 10, true);
 
-        return this.setStats(enemy, "Ghost", this.player.level, 200, 60, 30, 7, 9);
+        return this.setStats(enemy, 'Ghost', 200, 60, 30, 7, 9);
     },
 
     generateSpider: function (enemy) {
@@ -495,21 +560,58 @@ Theodoric.Game.prototype = {
         enemy.animations.add('right', [81, 82, 83], 10, true);
         enemy.animations.add('up', [93, 94, 95], 10, true);
 
-        return this.setStats(enemy, "Spider", this.player.level, 50, 120, 12, 4, 10);
+        return this.setStats(enemy, 'Spider', 50, 120, 12, 4, 10);
     },
 
-    generateDragon: function () {
+    generateDragon: function (colorIndex) {
 
         var boss = this.bosses.create(this.player.x, this.player.y - 300, 'dragons');
 
-        boss.animations.add('down', [0, 1, 2], 10, true);
-        boss.animations.add('left', [12, 13, 14], 10, true);
-        boss.animations.add('right', [24, 25, 26], 10, true);
-        boss.animations.add('up', [36, 37, 38], 10, true);
+        if (colorIndex === 0) {
+            boss.animations.add('down', [0, 1, 2], 10, true);
+            boss.animations.add('left', [12, 13, 14], 10, true);
+            boss.animations.add('right', [24, 25, 26], 10, true);
+            boss.animations.add('up', [36, 37, 38], 10, true);
+        } else if (colorIndex === 1) {
+            boss.animations.add('down', [3, 4, 5], 10, true);
+            boss.animations.add('left', [15, 16, 17], 10, true);
+            boss.animations.add('right', [27, 28, 29], 10, true);
+            boss.animations.add('up', [39, 40, 41], 10, true);
+        } else if (colorIndex === 2) {
+            boss.animations.add('down', [6, 7, 8], 10, true);
+            boss.animations.add('left', [18, 19, 20], 10, true);
+            boss.animations.add('right', [30, 31, 32], 10, true);
+            boss.animations.add('up', [42, 43, 44], 10, true);
+        } else if (colorIndex === 3) {
+            boss.animations.add('down', [9, 10, 11], 10, true);
+            boss.animations.add('left', [21, 22, 23], 10, true);
+            boss.animations.add('right', [33, 34, 35], 10, true);
+            boss.animations.add('up', [45, 46, 47], 10, true);
+        } else if (colorIndex === 4) {
+            boss.animations.add('down', [57, 58, 59], 10, true);
+            boss.animations.add('left', [69, 70, 71], 10, true);
+            boss.animations.add('right', [81, 82, 83], 10, true);
+            boss.animations.add('up', [93, 94, 95], 10, true);
+        } else if (colorIndex === 5) {
+            boss.animations.add('down', [54, 55, 56], 10, true);
+            boss.animations.add('left', [66, 67, 68], 10, true);
+            boss.animations.add('right', [78, 79, 80], 10, true);
+            boss.animations.add('up', [90, 91, 92], 10, true);
+        } else if (colorIndex === 6) {
+            boss.animations.add('down', [51, 52, 53], 10, true);
+            boss.animations.add('left', [63, 64, 65], 10, true);
+            boss.animations.add('right', [75, 76, 77], 10, true);
+            boss.animations.add('up', [87, 88, 89], 10, true);
+        } else if (colorIndex === 7) {
+            boss.animations.add('down', [48, 49, 50], 10, true);
+            boss.animations.add('left', [60, 61, 62], 10, true);
+            boss.animations.add('right', [72, 73, 74], 10, true);
+            boss.animations.add('up', [84, 85, 86], 10, true);
+        }
 
-        console.log("Generated dragon!");
+        console.log('Generated dragon!');
 
-        return this.setStats(boss, "Dragon", this.player.level, 2000, 100, 50, 500, 0);
+        return this.setStats(boss, 'Dragon', 1, 100, 50, 500, 0);
     },
 
     generateObstacles: function() {
@@ -532,7 +634,7 @@ Theodoric.Game.prototype = {
         obstacle.animations.add('idle', [38], 0, true);
         obstacle.animations.play('idle');
         obstacle.scale.setTo(2);
-        obstacle.body.setSize(8, 8, 4, 4);
+        obstacle.body.setSize(8, 8, 4, -2);
         obstacle.body.moves = false;
 
         return obstacle;
@@ -547,64 +649,86 @@ Theodoric.Game.prototype = {
         var amount = 100;
         for (var i = 0; i < amount; i++) {
             var point = this.getRandomLocation();
-            this.generateChest(collectables, point.x, point.y);
+            this.generateChest(collectables, point);
         }
 
         return collectables;
     },
 
-    generateChest: function (collectables, x, y) {
+    generateChest: function (collectables, location) {
 
-        var collectable = collectables.create(x, y, 'things');
+        var collectable = collectables.create(location.x, location.y, 'things');
         collectable.scale.setTo(2);
         collectable.animations.add('idle', [6], 0, true);
         collectable.animations.add('open', [18, 30, 42], 10, false);
         collectable.animations.play('idle');
-        collectable.name = "chest"
+        collectable.name = 'chest'
         collectable.value = Math.floor(Math.random() * 150);
 
         return collectable;
     },
 
-    generateGold: function (collectables, x, y) {
+    generateGold: function (collectables, enemy) {
 
-        var collectable = collectables.create(x, y, 'tiles');
+        var collectable = collectables.create(enemy.x, enemy.y, 'tiles');
         collectable.animations.add('idle', [68], 0, true);
         collectable.animations.play('idle');
-        collectable.name = "gold";
+        collectable.name = 'gold';
+        collectable.value = enemy.reward * 2;
         return collectable;
     },
 
     generatePotion: function (collectables, x, y) {
 
-        var collectable = collectables.create(x, y, 'potions');
-
         var rnd = Math.random();
         if (rnd >= 0 && rnd < .7) {
-            collectable.animations.add('idle', [0], 0, true);
-            collectable.animations.play('idle');
-            collectable.name = "healthPotion"
-            collectable.value = 20 + this.player.level + Math.floor(Math.random() * 10);
 
         } else if (rnd >= .7 && rnd < .8) {
-            collectable.animations.add('idle', [2], 0, true);
-            collectable.animations.play('idle');
-            collectable.name = "vitalityPotion"
-            collectable.value = 4 + this.player.level;
 
         } else if (rnd >= .8 && rnd < .9) {
-            collectable.animations.add('idle', [3], 0, true);
-            collectable.animations.play('idle');
-            collectable.name = "strengthPotion"
-            collectable.value = 1 + Math.floor(this.player.level / 5);
 
         } else if (rnd >= .9 && rnd < 1) {
-            collectable.animations.add('idle', [4], 0, true);
-            collectable.animations.play('idle');
-            collectable.name = "speedPotion"
-            collectable.value = 1 + Math.floor(this.player.level / 5);
-        }
 
+        }
+    },
+
+    generateHealthPotion: function (name) {
+
+        var collectable = collectables.create(x, y, 'potions');
+        collectable.animations.add('idle', [0], 0, true);
+        collectable.animations.play('idle');
+        collectable.name = 'healthPotion'
+        collectable.value = 20 + Math.floor(Math.random() * this.player.level);
+        return collectable;
+    },
+
+    generateHealthPotion: function (name) {
+
+        var collectable = collectables.create(x, y, 'potions');
+        collectable.animations.add('idle', [2], 0, true);
+        collectable.animations.play('idle');
+        collectable.name = 'vitalityPotion'
+        collectable.value = 4 + Math.floor(Math.random() * this.player.level);
+        return collectable;
+    },
+
+    generateHealthPotion: function (name) {
+
+        var collectable = collectables.create(x, y, 'potions');
+        collectable.animations.add('idle', [3], 0, true);
+        collectable.animations.play('idle');
+        collectable.name = 'strengthPotion'
+        collectable.value = 1 + Math.floor(Math.random() * this.player.level);
+        return collectable;
+    },
+
+    generateHealthPotion: function (name) {
+
+        var collectable = collectables.create(x, y, 'potions');
+        collectable.animations.add('idle', [4], 0, true);
+        collectable.animations.play('idle');
+        collectable.name = 'speedPotion'
+        collectable.value = 1 + Math.floor(Math.random() * this.player.level);
         return collectable;
     },
 
@@ -613,23 +737,23 @@ Theodoric.Game.prototype = {
         if (name === this.player.name) {
             this.playerSound.play();
 
-        } else if (name === "Skeleton") {
+        } else if (name === 'Skeleton') {
             this.skeletonSound.play();
 
-        } else if (name === "Slime") {
+        } else if (name === 'Slime') {
             this.slimeSound.play();
 
-        } else if (name === "Bat") {
+        } else if (name === 'Bat') {
             this.batSound.play();
 
-        } else if (name === "Ghost") {
+        } else if (name === 'Ghost') {
             this.ghostSound.play();
 
-        } else if (name === "Spider") {
+        } else if (name === 'Spider') {
             this.spiderSound.play();
 
-        } else if (name === "Dragon") {
-             this.roarSound.play();
+        } else if (name === 'Dragon') {
+             this.dragonSound.play();
          }
     },
 
@@ -637,8 +761,8 @@ Theodoric.Game.prototype = {
 
         this.attackSound = this.game.add.audio('attackSound');
         this.batSound = this.game.add.audio('batSound');
+        this.fireballSound = this.game.add.audio('fireballSound');
         this.dragonSound = this.game.add.audio('dragonSound');
-        this.roarSound = this.game.add.audio('roarSound');
         this.ghostSound = this.game.add.audio('ghostSound');
         this.goldSound = this.game.add.audio('goldSound');
         this.levelSound = this.game.add.audio('levelSound');
@@ -649,52 +773,52 @@ Theodoric.Game.prototype = {
         this.spiderSound = this.game.add.audio('spiderSound');
     },
 
-    updatePlayerMovement: function () {
+    playerMovementHandler: function () {
 
         // Up-Left
-        if (this.wasd.up.isDown && this.wasd.left.isDown) {
+        if (this.controls.up.isDown && this.controls.left.isDown) {
             this.player.body.velocity.x = -this.player.speed;
             this.player.body.velocity.y = -this.player.speed;
             this.player.animations.play('left');
 
         // Up-Right
-        } else if (this.wasd.up.isDown && this.wasd.right.isDown) {
+        } else if (this.controls.up.isDown && this.controls.right.isDown) {
             this.player.body.velocity.x = this.player.speed;
             this.player.body.velocity.y = -this.player.speed;
             this.player.animations.play('right');
 
         // Down-Left
-        } else if (this.wasd.down.isDown && this.wasd.left.isDown) {
+        } else if (this.controls.down.isDown && this.controls.left.isDown) {
             this.player.body.velocity.x = -this.player.speed;
             this.player.body.velocity.y = this.player.speed;
             this.player.animations.play('left');
 
         // Down-Right
-        } else if (this.wasd.down.isDown && this.wasd.right.isDown) {
+        } else if (this.controls.down.isDown && this.controls.right.isDown) {
             this.player.body.velocity.x = this.player.speed;
             this.player.body.velocity.y = this.player.speed;
             this.player.animations.play('right');
 
         // Up
-        } else if (this.wasd.up.isDown) {
+        } else if (this.controls.up.isDown) {
             this.player.body.velocity.x = 0;
             this.player.body.velocity.y = -this.player.speed;
             this.player.animations.play('up');
 
         // Down
-        } else if (this.wasd.down.isDown) {
+        } else if (this.controls.down.isDown) {
             this.player.body.velocity.x = 0;
             this.player.body.velocity.y = this.player.speed;
             this.player.animations.play('down');
 
         // Left
-        } else if (this.wasd.left.isDown) {
+        } else if (this.controls.left.isDown) {
             this.player.body.velocity.x = -this.player.speed;
             this.player.body.velocity.y = 0;
             this.player.animations.play('left');
 
         // Right
-        } else if (this.wasd.right.isDown) {
+        } else if (this.controls.right.isDown) {
             this.player.body.velocity.x = this.player.speed;
             this.player.body.velocity.y = 0;
             this.player.animations.play('right');
@@ -707,7 +831,7 @@ Theodoric.Game.prototype = {
         }
     },
 
-    updateEnemyMovement: function (enemy) {
+    enemyMovementHandler: function (enemy) {
 
         // Left animation
         if (enemy.body.velocity.x < 0 && enemy.body.velocity.x <= -Math.abs(enemy.body.velocity.y)) {
