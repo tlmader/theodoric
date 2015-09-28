@@ -14,7 +14,7 @@ Tools Used:
 * Github Pages - Remote testing
 
 Run game:
-Play [online](Tlmader.github.io) OR download [package](https://github.com/Tlmader/theodoric/archive/master.zip).
+Play [online](Tlmader.github.io) or download [package](https://github.com/Tlmader/theodoric/archive/master.zip).
 
 Controls:
 * WASD - Move
