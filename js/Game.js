@@ -57,6 +57,8 @@ Theodoric.Game.prototype = {
         this.generateObstacles();
         this.generateCollectables();
 
+        this.corpses = this.game.add.group();
+
         // Generate player and set camera to follow
         this.player = this.generatePlayer();
         this.game.camera.follow(this.player);
@@ -73,8 +75,6 @@ Theodoric.Game.prototype = {
         this.bosses = this.game.add.group();
         this.bosses.enableBody = true;
         this.bosses.physicsBodyType = Phaser.Physics.ARCADE;
-
-        this.corpses = this.game.add.group();
 
         // Music
 		this.music = this.game.add.audio('overworldMusic');
