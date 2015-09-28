@@ -31,6 +31,7 @@ Theodoric.Game = function (game) {
 
 Theodoric.Game.prototype = {
 
+    // Runs once at start of game
     create: function () {
 
         // Generate in order of back to front
@@ -52,11 +53,9 @@ Theodoric.Game.prototype = {
         this.bossSpawned = false;
         this.bossColorIndex = 0;
 
-        this.corpses = this.game.add.group();
-
-        this.obstacles = this.generateObstacles();
-
-        this.collectables = this.generateCollectables();
+        // Generate objects
+        this.generateObstacles();
+        this.generateCollectables();
 
         // Generate player and set camera to follow
         this.player = this.generatePlayer();
@@ -68,11 +67,14 @@ Theodoric.Game.prototype = {
         this.bossAttacks = this.generateAttacks('fireball', 1, 2000, 300);
 
         // Generate enemies - must be generated after player and player.level
-        this.enemies = this.generateEnemies(100);
+        this.generateEnemies(100);
 
+        // Generate bosses
         this.bosses = this.game.add.group();
         this.bosses.enableBody = true;
         this.bosses.physicsBodyType = Phaser.Physics.ARCADE;
+
+        this.corpses = this.game.add.group();
 
         // Music
 		this.music = this.game.add.audio('overworldMusic');
@@ -95,9 +97,25 @@ Theodoric.Game.prototype = {
         this.showLabels();
     },
 
+    // Checks for actions and changes
     update: function () {
 
-        // Player
+        this.playerHandler();
+        this.enemyHandler();
+        this.bossHandler();
+        this.collisionHandler();
+
+        this.collectables.forEachDead(function(collectable) {
+            collectable.destroy();
+        });
+
+        this.notificationLabel.text = this.notification;
+        this.xpLabel.text = 'Lvl. ' + this.player.level + ' - ' + this.xp + ' XP / ' + this.xpToNext + ' XP';
+        this.goldLabel.text = this.gold + ' Gold';
+        this.healthLabel.text = this.player.health + ' / ' + this.player.vitality;
+    },
+
+    playerHandler: function() {
 
         if (this.player.alive) {
             this.playerMovementHandler();
@@ -105,6 +123,9 @@ Theodoric.Game.prototype = {
             // Attack towards mouse click
             if (this.game.input.activePointer.isDown) {
                 this.playerAttacks.rate = 1000 - (this.player.speed * 4);
+                    if (this.playerAttacks.rate < 200) {
+                        this.playerAttacks.rate = 200;
+                    }
                 this.playerAttacks.range = this.player.strength * 3;
                 this.attack(this.player, this.playerAttacks);
             }
@@ -114,7 +135,7 @@ Theodoric.Game.prototype = {
             this.spellLabel.text = "READY!";
 
                 if (this.controls.spell.isDown) {
-                    this.playerSpells.rate = 1500 - (this.player.speed * 4);
+                    this.playerSpells.rate = 0;
                     this.playerSpells.range = this.player.strength * 6;
                     this.attack(this.player, this.playerSpells);
                     this.spellCooldown = this.game.time.now + 15000;
@@ -136,8 +157,9 @@ Theodoric.Game.prototype = {
             this.deathHandler(this.player);
             this.game.time.events.add(1000, this.gameOver, this);
         }
+    },
 
-        // Enemies
+    enemyHandler: function() {
 
         this.enemies.forEachAlive(function(enemy) {
             if (enemy.visible && enemy.inCamera) {
@@ -149,9 +171,9 @@ Theodoric.Game.prototype = {
 
         this.enemies.forEachDead(function(enemy) {
             if (this.rng(0, 5)) {
-                this.generateGold(this.collectables, enemy);
+                this.generateGold(enemy);
             } else if (this.rng(0, 2)) {
-                this.generatePotion(this.collectables, enemy);
+                this.generatePotion(enemy);
                 this.notification = 'The ' + enemy.name + ' dropped a potion!';
             }
             this.xp += enemy.reward;
@@ -161,8 +183,9 @@ Theodoric.Game.prototype = {
             }
             this.deathHandler(enemy);
         }, this);
+    },
 
-        // Boss
+    bossHandler: function() {
 
         // Spawn boss if player obtains enough gold
         if (this.gold > this.goldForBoss && !this.bossSpawned) {
@@ -189,8 +212,11 @@ Theodoric.Game.prototype = {
                 this.bossColorIndex++;
             }
 
-            this.generateGold(this.collectables, boss);
-            this.generatePotion(this.collectables, boss);
+            this.generateGold(boss);
+            this.generateChest(boss);
+            this.generateVitalityPotion(boss);
+            this.generateStrengthPotion(boss);
+            this.generateSpeedPotion(boss);
             this.notification = 'The ' + boss.name + ' dropped a potion!';
             this.xp += boss.reward;
 
@@ -205,21 +231,29 @@ Theodoric.Game.prototype = {
             boss.destroy();
 
         }, this);
+    },
 
-        this.collisionHandler();
+    collisionHandler: function() {
 
-        // Collectables
+        this.game.physics.arcade.collide(this.player, this.enemies, this.hit, null, this);
+        this.game.physics.arcade.collide(this.player, this.bosses, this.hit, null, this);
+        this.game.physics.arcade.collide(this.player, this.bossAttacks, this.hit, null, this);
 
-        this.collectables.forEachDead(function(collectable) {
-            collectable.destroy();
-        });
+        this.game.physics.arcade.collide(this.bosses, this.playerAttacks, this.hit, null, this);
+        this.game.physics.arcade.collide(this.enemies, this.playerAttacks, this.hit, null, this);
+        this.game.physics.arcade.overlap(this.bosses, this.playerAttacks, this.hit, null, this);
+        this.game.physics.arcade.overlap(this.enemies, this.playerAttacks, this.hit, null, this);
 
-        // Labels
+        this.game.physics.arcade.collide(this.bosses, this.playerSpells, this.hit, null, this);
+        this.game.physics.arcade.collide(this.enemies, this.playerSpells, this.hit, null, this);
+        this.game.physics.arcade.overlap(this.bosses, this.playerSpells, this.hit, null, this);
+        this.game.physics.arcade.overlap(this.enemies, this.playerSpells, this.hit, null, this);
 
-        this.notificationLabel.text = this.notification;
-        this.xpLabel.text = 'Lvl. ' + this.player.level + ' - ' + this.xp + ' XP / ' + this.xpToNext + ' XP';
-        this.goldLabel.text = this.gold + ' Gold';
-        this.healthLabel.text = this.player.health + ' / ' + this.player.vitality;
+        this.game.physics.arcade.collide(this.obstacles, this.player, null, null, this);
+        this.game.physics.arcade.collide(this.obstacles, this.playerAttacks, null, null, this);
+        this.game.physics.arcade.collide(this.obstacles, this.enemies, null, null, this);
+
+        this.game.physics.arcade.overlap(this.collectables, this.player, this.collect, null, this);
     },
 
     showLabels: function() {
@@ -265,29 +299,6 @@ Theodoric.Game.prototype = {
         emitter.start(true, 1000, null, 100);
     },
 
-    collisionHandler: function() {
-
-        this.game.physics.arcade.collide(this.player, this.enemies, this.hit, null, this);
-        this.game.physics.arcade.collide(this.player, this.bosses, this.hit, null, this);
-        this.game.physics.arcade.collide(this.player, this.bossAttacks, this.hit, null, this);
-
-        this.game.physics.arcade.collide(this.bosses, this.playerAttacks, this.hit, null, this);
-        this.game.physics.arcade.collide(this.enemies, this.playerAttacks, this.hit, null, this);
-        this.game.physics.arcade.overlap(this.bosses, this.playerAttacks, this.hit, null, this);
-        this.game.physics.arcade.overlap(this.enemies, this.playerAttacks, this.hit, null, this);
-
-        this.game.physics.arcade.collide(this.bosses, this.playerSpells, this.hit, null, this);
-        this.game.physics.arcade.collide(this.enemies, this.playerSpells, this.hit, null, this);
-        this.game.physics.arcade.overlap(this.bosses, this.playerSpells, this.hit, null, this);
-        this.game.physics.arcade.overlap(this.enemies, this.playerSpells, this.hit, null, this);
-
-        this.game.physics.arcade.collide(this.obstacles, this.player, null, null, this);
-        this.game.physics.arcade.collide(this.obstacles, this.playerAttacks, null, null, this);
-        this.game.physics.arcade.collide(this.obstacles, this.enemies, null, null, this);
-
-        this.game.physics.arcade.overlap(this.collectables, this.player, this.collect, null, this);
-    },
-
     attack: function (attacker, attacks) {
 
         if (attacker.alive && this.game.time.now > attacks.next && attacks.countDead() > 0) {
@@ -298,14 +309,14 @@ Theodoric.Game.prototype = {
             a.strength = attacker.strength;
             a.reset(attacker.x + 16, attacker.y + 16);
             a.lifespan = attacks.rate;
-            console.log(attacks.name);
+            console.log(attacker.name + " used " + attacks.name + "!");
             if (attacks.name === 'sword') {
                 a.rotation = this.game.physics.arcade.moveToPointer(a, attacks.range);
                 this.attackSound.play();
             } else if (attacks.name === 'spell') {
                 a.rotation = this.game.physics.arcade.moveToPointer(a, attacks.range);
                 a.effect = 'spell';
-                a.strength *= 2;
+                a.strength *= 3;
                 this.fireballSound.play();
             } else if (attacks.name === 'fireball') {
                 a.rotation = this.game.physics.arcade.moveToObject(a, this.player, attacks.range);
@@ -361,8 +372,6 @@ Theodoric.Game.prototype = {
                 emitter.maxParticleSpeed.setTo(200, 200);
                 emitter.gravity = 0;
                 emitter.start(true, 1000, null, 100);
-
-                attacker.kill();
             }
         }
     },
@@ -480,22 +489,20 @@ Theodoric.Game.prototype = {
 
     generateEnemies: function (amount) {
 
-        var enemies = this.game.add.group();
+        this.enemies = this.game.add.group();
 
         // Enable physics in them
-        enemies.enableBody = true;
-        enemies.physicsBodyType = Phaser.Physics.ARCADE;
+        this.enemies.enableBody = true;
+        this.enemies.physicsBodyType = Phaser.Physics.ARCADE;
 
         for (var i = 0; i < amount; i++) {
-            this.generateEnemy(enemies);
+            this.generateEnemy();
         }
-
-        return enemies;
     },
 
-    generateEnemy: function (enemies) {
+    generateEnemy: function () {
 
-        var enemy = enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
+        enemy = this.enemies.create(this.game.world.randomX, this.game.world.randomY, 'characters');
 
         do {
             enemy.reset(this.game.world.randomX, this.game.world.randomY);
@@ -616,21 +623,19 @@ Theodoric.Game.prototype = {
 
     generateObstacles: function() {
 
-        var obstacles = this.game.add.group();
-        obstacles.enableBody = true;
+        this.obstacles = this.game.add.group();
+        this.obstacles.enableBody = true;
 
         var amount = 300;
         for (var i = 0; i < amount; i++) {
             var point = this.getRandomLocation();
-            this.generateObstacle(obstacles, point.x, point.y);
+            this.generateObstacle(point);
         }
-
-        return obstacles
     },
 
-    generateObstacle: function (obstacles, x, y) {
+    generateObstacle: function (location) {
 
-        var obstacle = obstacles.create(x, y, 'tiles');
+        obstacle = this.obstacles.create(location.x, location.y, 'tiles');
         obstacle.animations.add('idle', [38], 0, true);
         obstacle.animations.play('idle');
         obstacle.scale.setTo(2);
@@ -642,22 +647,20 @@ Theodoric.Game.prototype = {
 
     generateCollectables: function () {
 
-        var collectables = this.game.add.group();
-        collectables.enableBody = true;
-        collectables.physicsBodyType = Phaser.Physics.ARCADE;
+        this.collectables = this.game.add.group();
+        this.collectables.enableBody = true;
+        this.collectables.physicsBodyType = Phaser.Physics.ARCADE;
 
         var amount = 100;
         for (var i = 0; i < amount; i++) {
             var point = this.getRandomLocation();
-            this.generateChest(collectables, point);
+            this.generateChest(point);
         }
-
-        return collectables;
     },
 
-    generateChest: function (collectables, location) {
+    generateChest: function (location) {
 
-        var collectable = collectables.create(location.x, location.y, 'things');
+        var collectable = this.collectables.create(location.x, location.y, 'things');
         collectable.scale.setTo(2);
         collectable.animations.add('idle', [6], 0, true);
         collectable.animations.add('open', [18, 30, 42], 10, false);
@@ -668,9 +671,9 @@ Theodoric.Game.prototype = {
         return collectable;
     },
 
-    generateGold: function (collectables, enemy) {
+    generateGold: function (enemy) {
 
-        var collectable = collectables.create(enemy.x, enemy.y, 'tiles');
+        var collectable = this.collectables.create(enemy.x, enemy.y, 'tiles');
         collectable.animations.add('idle', [68], 0, true);
         collectable.animations.play('idle');
         collectable.name = 'gold';
@@ -678,57 +681,57 @@ Theodoric.Game.prototype = {
         return collectable;
     },
 
-    generatePotion: function (collectables, x, y) {
+    generatePotion: function (location) {
 
         var rnd = Math.random();
         if (rnd >= 0 && rnd < .7) {
-
+            this.generateHealthPotion(location);
         } else if (rnd >= .7 && rnd < .8) {
-
+            this.generateVitalityPotion(location);
         } else if (rnd >= .8 && rnd < .9) {
-
+            this.generateStrengthPotion(location);
         } else if (rnd >= .9 && rnd < 1) {
-
+            this.generateSpeedPotion(location);
         }
     },
 
-    generateHealthPotion: function (name) {
+    generateHealthPotion: function (location) {
 
-        var collectable = collectables.create(x, y, 'potions');
+        var collectable = this.collectables.create(location.x, location.y, 'potions');
         collectable.animations.add('idle', [0], 0, true);
         collectable.animations.play('idle');
         collectable.name = 'healthPotion'
-        collectable.value = 20 + Math.floor(Math.random() * this.player.level);
+        collectable.value = 20 + Math.floor(Math.random() * 10) + this.player.level;
         return collectable;
     },
 
-    generateHealthPotion: function (name) {
+    generateVitalityPotion: function (location) {
 
-        var collectable = collectables.create(x, y, 'potions');
+        var collectable = this.collectables.create(location.x, location.y, 'potions');
         collectable.animations.add('idle', [2], 0, true);
         collectable.animations.play('idle');
         collectable.name = 'vitalityPotion'
-        collectable.value = 4 + Math.floor(Math.random() * this.player.level);
+        collectable.value = 4 + Math.floor(Math.random() * 10);
         return collectable;
     },
 
-    generateHealthPotion: function (name) {
+    generateStrengthPotion: function (location) {
 
-        var collectable = collectables.create(x, y, 'potions');
+        var collectable = this.collectables.create(location.x, location.y, 'potions');
         collectable.animations.add('idle', [3], 0, true);
         collectable.animations.play('idle');
         collectable.name = 'strengthPotion'
-        collectable.value = 1 + Math.floor(Math.random() * this.player.level);
+        collectable.value = 1 + Math.floor(Math.random() * 10);
         return collectable;
     },
 
-    generateHealthPotion: function (name) {
+    generateSpeedPotion: function (location) {
 
-        var collectable = collectables.create(x, y, 'potions');
+        var collectable = this.collectables.create(location.x, location.y, 'potions');
         collectable.animations.add('idle', [4], 0, true);
         collectable.animations.play('idle');
         collectable.name = 'speedPotion'
-        collectable.value = 1 + Math.floor(Math.random() * this.player.level);
+        collectable.value = 1 + Math.floor(Math.random() * 10);
         return collectable;
     },
 
@@ -833,19 +836,19 @@ Theodoric.Game.prototype = {
 
     enemyMovementHandler: function (enemy) {
 
-        // Left animation
+        // Left
         if (enemy.body.velocity.x < 0 && enemy.body.velocity.x <= -Math.abs(enemy.body.velocity.y)) {
              enemy.animations.play('left');
 
-        // Right animation
+        // Right
         } else if (enemy.body.velocity.x > 0 && enemy.body.velocity.x >= Math.abs(enemy.body.velocity.y)) {
              enemy.animations.play('right');
 
-        // Up animation
+        // Up
         } else if (enemy.body.velocity.y < 0 && enemy.body.velocity.y <= -Math.abs(enemy.body.velocity.x)) {
             enemy.animations.play('up');
 
-        // Down animation
+        // Down
         } else {
             enemy.animations.play('down');
         }
