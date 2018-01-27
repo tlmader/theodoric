@@ -26,7 +26,7 @@ Tools Used:
 
 ## Credits
 
-###Tools
+### Tools
 
 Phaser: The fun, fast and free HTML5 Game Framework.
 http://phaser.io/
