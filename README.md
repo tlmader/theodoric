@@ -13,20 +13,20 @@ Tools Used:
 * Wamp - Local testing
 * Github Pages - Remote testing
 
-Run game:
-Play [online](Tlmader.github.io) or download the [package](https://github.com/Tlmader/theodoric/archive/master.zip), unzip, and run Theodoric.exe. WARNING: The package has an issue with playing the game's audio - the audio may sound sluggish.
+## Play
+[Play online](https://tlmader.github.io/projects/theodoric) or download the [package](https://github.com/Tlmader/theodoric/archive/master.zip), unzip, and run Theodoric.exe. WARNING: The package has an issue with playing the game's audio - the audio may sound sluggish.
 
-Controls:
+## Controls
 * WASD - Move
 * Left Mouse Button - Hold down to attack
 * Spacebar - Cast spell
 
-Objectives:
+## Objective
 * Gather gold and slay monsters to achieve the highest score possible!
 
-# Credits
+## Credits
 
-Tools
+###Tools
 
 Phaser: The fun, fast and free HTML5 Game Framework.
 http://phaser.io/
@@ -34,7 +34,7 @@ http://phaser.io/
 NW.js - Call all Node.js modules directly from DOM and enable a new way of writing applications with all Web technologies.
 http://nwjs.io
 
-Tutorials
+### Tutorials
 
 Pablo Farias Navarro - HTML5 Phaser Tutorial – SpaceHipster, A Space Exploration Game
 http://gamedevacademy.org/html5-phaser-tutorial-spacehipster-a-space-exploration-game/
@@ -48,7 +48,7 @@ http://jschomay.tumblr.com/post/103568304133/tutorial-building-a-polished-html5-
 Alaa-eddine - Tutorial : Creating a basic multiplayer game with Phaser and Eureca.io
 http://ezelia.com/2014/tutorial-creating-basic-multiplayer-game-phaser-eureca-io
 
-Assets
+### Assets
 
 Sharm - Tiny 16: Basic
 http://opengameart.org/content/tiny-16-basic
@@ -74,7 +74,7 @@ http://cooltext.com/
 Bfxr. Make sound effects for your games.
 http://www.bfxr.net/
 
-Testers:
+### Testers:
 
 Astrid Manuel
 
