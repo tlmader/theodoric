@@ -12,7 +12,7 @@ Tools Used:
 * Github Pages - Remote testing
 
 ## Play
-[Play online](https://tlmader.github.io/projects/theodoric) or download the [package](https://github.com/Tlmader/theodoric/archive/master.zip), unzip, and run Theodoric.exe. WARNING: The package has an issue with playing the game's audio - the audio may sound sluggish.
+[Play online](http://tlmader.github.io/theodoric/) or download the [package](https://github.com/Tlmader/theodoric/archive/master.zip), unzip, and run Theodoric.exe. WARNING: The package has an issue with playing the game's audio - the audio may sound sluggish.
 
 ## Controls
 * WASD - Move
