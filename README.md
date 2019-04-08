@@ -2,7 +2,7 @@
 
 v0.1
 
-A 2D top-down "action RPG" built on the Phaser HTML5 game framework
+A 2D top-down "action RPG" built with the Phaser HTML5 game framework
 
 Author: Ted Mader
 
